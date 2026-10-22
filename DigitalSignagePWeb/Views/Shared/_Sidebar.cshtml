@@ -1,0 +1,52 @@
+﻿
+<aside class="menu-sidebar" id="main-sidebar">
+    <div class="logo">
+        <div class="cont-inicial-Sb" onclick="window.location.href='@Url.Action("Index", "Home")'" style="cursor: pointer;">            
+                <img class="imgLogoGen"
+                     src="~/Content/Admin/images/icon/RW_LogoWEB.png"
+                     alt="RebelWings-DigitalSignage">            
+        </div>
+
+        <button class="sidebar-close js-sidebar-toggle" type="button" aria-label="Close navigation">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="menu-sidebar__content js-scrollbar1">
+        <nav class="navbar-sidebar">
+            <ul class="list-unstyled navbar__list">
+
+                <li class="has-sub">
+                    <a class="js-arrow" href="#">
+                        <i class="fa-solid fa-user-gear"></i>Cuenta
+                    </a>
+                    <ul class="list-unstyled navbar__sub-list js-sub-list">
+                        <li><a href="@Url.Action("Cuenta","Usuarios")">Perfil y Configuraciones</a></li>
+                        <li><a href="pricing.html">Alta de usuarios</a></li>
+                        <li><a href="invoice.html">Alta de roles</a></li>
+                    </ul>
+                </li>
+                <li class="has-sub">
+                    <a class="js-arrow" href="#">
+                        <i class="fa-solid fa-tachometer-alt"></i>Dashboard
+                    </a>
+                    <ul class="list-unstyled navbar__sub-list js-sub-list">
+                        <li><a href="index.html">Dashboard 1</a></li>
+                        <li><a href="index2.html">Dashboard 2</a></li>
+
+                    </ul>
+                </li>
+                <li class="has-sub">
+                    <a class="js-arrow" href="#">
+                        <i class="fa-solid fa-desktop"></i>Dispositivos
+                    </a>
+                    <ul class="list-unstyled navbar__sub-list js-sub-list">
+                        <li><a href="@Url.Action("Monitoreo","Dispositivos")">Monitoreo de dispositivos</a></li>
+                        <li><a href="index2.html">Administrar dispositivos</a></li>
+
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>
+

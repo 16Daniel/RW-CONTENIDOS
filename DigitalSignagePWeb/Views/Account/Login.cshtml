@@ -1,0 +1,71 @@
+﻿
+@{
+    ViewBag.Title = "Inicio Sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>  @ViewBag.Title | Digital Signage</title>
+
+    <!-- Estilos css login -->
+    <link href="~/Content/Admin/css/font-face.css" rel="stylesheet" media="all" />
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link href="~/Content/Admin/vendor/fontawesome-7.3.1/css/all.min.css" rel="stylesheet" media="all" />
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" media="all" />
+    <link href="~/Content/Admin/vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all" />
+    <link href="~/Content/Admin/css/theme.css" rel="stylesheet" media="all" />
+    <link href="~/Content/Admin/css/app.css" rel="stylesheet" media="all" />
+    @Styles.Render("~/Content/loader")
+</head>
+<body class="app auth-page">
+    <!-- Carga del loader -->
+    @Html.Partial("_Loader")
+    <a class="visually-hidden-focusable skip-link" href="#auth-form">Skip to sign-in form</a>
+    <main class="login-wrap" id="auth-form">
+        <div class="login-content">
+            <a href="index.html" class="auth-brand" aria-label="Rebel Wings Digital Signage">
+                <img class="auth-logo" src="~/Content/Admin/images/icon/RW_LogoWEB.png" alt="Rebel Wings Wings &amp; Ribs" />
+            </a>
+            <h1 class="auth-title">Bienvenido</h1>
+            <p class="auth-subtitle">Inicia sesión para acceder.</p>
+
+            <form class="login-form needs-validation" action="@Url.Action("ValidarUsuario","Account")" novalidate>
+                <div class="form-group">
+                    <label for="email">Correo</label>
+                    <input id="email" class="au-input" type="email" name="email"
+                           placeholder="correo@operamx.com" autocomplete="email" required>
+                    <div class="invalid-feedback">
+                        Escriba su correo electrónico.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input id="password" class="au-input" type="password" name="password"
+                           placeholder="••••••••" autocomplete="current-password" required>
+                    <div class="invalid-feedback">
+                        Escriba su contraseña.
+                    </div>
+                </div>
+                <div class="login-checkbox">
+                    <a class="recuperar-pass" href="forget-pass.html">¿Olvidaste tu contraseña?</a>
+                </div>
+                <button class="au-btn au-btn--green" id="IniciarSesion" type="submit" data-mdb-button-init data-mdb-ripple-init>Acceder</button>
+
+            </form>
+
+        </div>
+    </main>
+
+    @Scripts.Render("~/bundles/jquery")
+    <script src="~/Scripts/bootstrap.bundle.min.js"></script>
+    @Scripts.Render("~/bundles/loader")
+    @Scripts.Render("~/bundles/alerts")
+    <script src="~/Scripts/Account/Login.js"></script>
+</body>
+</html>
+

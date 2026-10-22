@@ -1,0 +1,954 @@
+﻿
+'use strict';
+
+class Monitoreo {
+
+    // ========================================================
+    // CONSTRUCTOR
+    // ========================================================
+
+    constructor() {
+
+        this.devices = [];
+
+        this.currentPage = 1;
+        this.view = 'grid';
+
+        this.filters = {
+            search: '',
+            region: '',
+            estatus: ''
+        };
+
+        this.raspberryImageUrl = typeof raspberryImageUrl !== 'undefined'
+            ? raspberryImageUrl
+            : '';
+
+    }
+
+
+    // ========================================================
+    // INICIALIZACIÓN
+    // ========================================================
+
+    async init() {
+
+        try {
+
+            this.bindEvents();
+
+            await this.cargarRegiones();
+            await this.cargarEstatusPlayer();
+            await this.cargarPlayers();
+
+            this.updateCounters();
+            this.render();
+
+        } catch (error) {
+
+            console.error('Error al inicializar Monitoreo:', error);
+
+        }
+
+    }
+
+    // ========================================================
+    // CONSULTA DE PLAYERS
+    // ========================================================
+
+    async cargarPlayers() {
+
+        try {
+
+            Loading();
+
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('ObtenerPlayers'),
+                type: 'GET',
+                dataType: 'JSON',
+                cache: false
+            });
+
+            if (response.Status === 'OK') {
+
+                this.devices = response.Data.map(player => new Players(player));
+
+                this.currentPage = 1;
+
+                this.updateCounters();
+                this.render();
+
+            } else {
+
+                Alerts.error(
+                    response.Message || 'No se recibió el detalle del error.',
+                    'Error al cargar dispositivos'
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error('Error al cargar dispositivos:', error);
+
+            let mensaje = error.responseJSON?.Message
+                || error.responseJSON?.ExceptionMessage;
+
+            if (!mensaje && error.responseText) {
+
+                const documento = new DOMParser().parseFromString(
+                    error.responseText,
+                    'text/html'
+                );
+
+                mensaje = documento.title || error.responseText;
+
+            }
+
+            Alerts.error(
+                mensaje || error.message || 'No se recibió el detalle del error.',
+                'Error al cargar dispositivos'
+            );
+
+        } finally {
+
+            StopLoading();
+
+        }
+
+
+    }
+
+    // ========================================================
+    // FILTROS - CATÁLOGOS
+    // ========================================================
+
+    async cargarRegiones() {
+
+        try {
+
+            Loading();
+
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('ObtenerRegiones'),
+                type: 'GET',
+                dataType: 'JSON'
+            });
+
+            if (response.Status === 'OK') {
+
+                const select = $('#region');
+
+                select.empty();
+                select.append('<option value="">Todas</option>');
+
+                response.Data.forEach(region => {
+
+                    select.append(
+                        $('<option>', {
+                            value: region.id_estado,
+                            text: region.estado + ' - ' + region.abreviatura
+                        })
+                    );
+
+                });
+
+            } else {
+
+                Alerts.error(response.Message, 'Error al cargar regiones');
+
+            }
+
+        } catch (error) {
+
+            console.error('Error al cargar regiones:', error);
+
+            const mensaje = error.responseJSON?.Message
+                || error.responseJSON?.ExceptionMessage
+                || error.responseText
+                || error.message
+                || 'No se recibió el detalle del error.';
+
+            Alerts.error(mensaje, 'Error al cargar regiones');
+
+        } finally {
+
+            StopLoading();
+
+        }
+
+    }
+
+    async cargarEstatusPlayer() {
+
+        try {
+
+            Loading();
+
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('ObtenerEstatusPlayer'),
+                type: 'GET',
+                dataType: 'JSON'
+            });
+
+            if (response.Status === 'OK') {
+
+                this.estatusPlayers = response.Data;
+
+                const select = $('#estatus');
+
+                select.empty();
+                select.append('<option value="">Todos</option>');
+
+                this.estatusPlayers.forEach(estatus => {
+
+                    select.append(
+                        $('<option>', {
+                            value: estatus.id_estatus_player,
+                            text: estatus.estatus_player
+                        })
+                    );
+
+                });
+
+            } else {
+
+                Alerts.error(response.Message, 'Error al cargar estatus');
+
+            }
+
+        } catch (error) {
+
+            console.error('Error al cargar estatus:', error);
+
+            const mensaje = error.responseJSON?.Message
+                || error.responseJSON?.ExceptionMessage
+                || error.responseText
+                || error.message
+                || 'No se recibió el detalle del error.';
+
+            Alerts.error(mensaje, 'Error al cargar estatus');
+
+        } finally {
+
+            StopLoading();
+
+        }
+
+    }
+
+    // ========================================================
+    // FILTRADO
+    // ========================================================
+
+    search() {
+
+        this.filters = {
+            search: String($('#search').val() || '').toLowerCase().trim(),
+            region: $('#region').val() || '',
+            estatus: $('#estatus').val() || ''
+        };
+
+        this.currentPage = 1;
+        this.render();
+
+    }
+
+    clearFilters() {
+
+        $('#search').val('');
+        $('#region').val('');
+        $('#estatus').val('');
+
+        this.filters = {
+            search: '',
+            region: '',
+            estatus: ''
+        };
+
+        this.currentPage = 1;
+        this.render();
+
+    }
+
+    getFilteredDevices() {
+
+        const filters = this.filters;
+
+        return this.devices.filter(device => {
+
+            const matchesSearch = !filters.search || [
+                "PLYR-" + device.id_player,
+                device.sucursal,
+                device.direccion_mac,
+                device.ip_player
+            ].some(value =>
+                String(value ?? '').toLowerCase().includes(filters.search)
+            );
+
+            const matchesRegion =
+                !filters.region ||
+                String(device.id_estado) === String(filters.region);
+
+            const matchesStatus =
+                !filters.estatus ||
+                String(device.id_estatus_player) === String(filters.estatus);
+
+            return (
+                matchesSearch &&
+                matchesRegion &&
+                matchesStatus
+            );
+
+        });
+
+    }
+
+    // ========================================================
+    // CONTADORES
+    // ========================================================
+
+    updateCounters() {
+
+        $('#count-total').text(this.devices.length);
+
+        this.estatusPlayers.forEach(estatus => {
+
+            const count = this.devices.filter(
+                device =>
+                    String(device.id_estatus_player) ===
+                    String(estatus.id_estatus_player)
+            ).length;
+
+            $('#count-' + estatus.id_estatus_player).text(count);
+
+        });
+
+    }
+
+    // ========================================================
+    // EVENTOS
+    // ========================================================
+
+    bindEvents() {
+
+        $('#btn-search').on('click', () => {
+            this.search();
+        });
+
+        $('#search').on('keydown', event => {
+
+            if (event.key === 'Enter') {
+
+                event.preventDefault();
+                this.search();
+
+            }
+
+        });
+
+        $('#clear').on('click', () => {
+            this.clearFilters();
+        });
+
+        $('#page-size').on('change', () => {
+
+            this.currentPage = 1;
+            this.render();
+
+        });        
+
+        $('#grid-btn').on('click', () => {
+
+            this.view = 'grid';
+            this.render();
+
+        });
+
+        $('#table-btn').on('click', () => {
+
+            this.view = 'table';
+            this.render();
+
+        });
+
+        $('#sidebar-toggle').on('click', () => {
+
+            document.body.classList.toggle('sidebar-open');
+
+        });
+
+        $('#devices').on('click', '[data-detail]', event => {
+
+            const id = $(event.currentTarget).attr('data-detail');
+
+            this.openModal(id);
+
+        });
+
+        $('#pages').on('click', '[data-page]', event => {
+
+            const button = event.currentTarget;
+
+            if (button.disabled) {
+                return;
+            }
+
+            this.currentPage = Number($(button).attr('data-page'));
+            this.render();
+
+        });
+              
+
+    }
+        
+    // ========================================================
+    // RENDERIZADO PRINCIPAL
+    // ========================================================
+
+    render() {
+
+        const list = this.getFilteredDevices();
+
+        const size = Number($('#page-size').val()) || 12;
+
+        const totalPages = Math.max(
+            1,
+            Math.ceil(list.length / size)
+        );
+
+        this.currentPage = Math.max(
+            1,
+            Math.min(this.currentPage, totalPages)
+        );
+
+        const start = (this.currentPage - 1) * size;
+        const page = list.slice(start, start + size);
+
+        $('#result-count').text(list.length + ' resultados');
+
+        $('#grid-btn').toggleClass(
+            'selected',
+            this.view === 'grid'
+        );
+
+        $('#table-btn').toggleClass(
+            'selected',
+            this.view === 'table'
+        );
+
+        if (page.length === 0) {
+
+            $('#devices').html(`
+                <div class="empty">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <p>No se encontraron dispositivos con esos filtros.</p>
+                </div>
+            `);
+
+        } else if (this.view === 'grid') {
+
+            this.renderGrid(page);
+
+        } else {
+
+            this.renderTable(page);
+
+        }
+
+        this.renderPagination(list.length, size, totalPages);
+
+    }
+
+    // ========================================================
+    // VISTA DE TARJETAS
+    // ========================================================
+
+    renderGrid(devices) {
+
+        const cards = devices.map(
+            device => this.createCard(device)
+        ).join('');
+
+        $('#devices').html(`
+            <div class="device-grid">
+                ${cards}
+            </div>
+        `);
+
+    }
+
+    createCard(device) {
+
+        return `
+            <article class="m-card device-card card-hover">
+
+                <div class="device-top">
+
+                    <span class="status ${this.getStatusClass(device.estatus_player)}">
+                        ${this.escapeHTML(device.estatus_player)}
+                    </span>
+
+                    <span class="status ${this.getEstadoSincronizacion(device.estado_sincronizacion)}">
+                    
+                        ${this.escapeHTML(device.estado_sincronizacion)}
+                    </span>
+
+                </div>
+
+                <div class="device-illustration">
+                    <img src="${this.escapeHTML(this.raspberryImageUrl)}"
+                         alt="Raspberry Pi"
+                         class="img-disp">
+                </div>
+
+                <h3 class="device-name">
+                    ${this.escapeHTML(device.sucursal)}
+                </h3>
+
+                <div class="device-id">
+                    PLYR-${this.escapeHTML(device.id_player)}
+                </div>
+
+                <div class="device-details">
+
+                    <div class="detail">
+
+                        <i class="fa-solid fa-link"></i>
+
+                        <div>
+                            <div class="detail-label fw-bold">MAC</div>
+                            <div class="detail-value">
+                                ${this.escapeHTML(device.direccion_mac)}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="detail">
+
+                        <i class="fa-solid fa-network-wired"></i>
+
+                        <div>
+                            <div class="detail-label fw-bold">Región</div>
+                            <div class="detail-value">
+                                ${this.escapeHTML(device.estado)}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="detail">
+
+                        <i class="fa-solid fa-circle-play"></i>
+
+                        <div>
+                            <div class="detail-label fw-bold">Contenido</div>
+                            <div class="detail-value">
+                                ${this.escapeHTML(device.ultimo_contenido_reportado)}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        class="m-btn m-btn--ghost detail-btn"
+                        data-detail="${this.escapeHTML(device.id_player)}">
+
+                    <i class="fa-solid fa-eye"></i>
+                    &nbsp; Ver detalles
+
+                </button>
+
+            </article>
+        `;
+
+    }
+
+    // ========================================================
+    // VISTA DE TABLA
+    // ========================================================
+
+    renderTable(devices) {
+
+        const rows = devices.map(device => `
+            <tr>
+
+                <td>
+                    <strong>
+                        ${this.escapeHTML(device.sucursal)}
+                    </strong>
+
+                    <br>
+
+                    <small>
+                        PLYR-${this.escapeHTML(device.id_player)}
+                    </small>
+                </td>
+
+                <td>${this.escapeHTML(device.direccion_mac)}</td>
+                <td>${this.escapeHTML(device.estado)}</td>
+                <td>${this.escapeHTML(device.ultimo_contenido_reportado)}</td>
+
+                <td>
+                   <span class="status ${this.getEstadoSincronizacion(device.estado_sincronizacion)}">                    
+                        ${this.escapeHTML(device.estado_sincronizacion)}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="status ${this.getStatusClass(device.estatus_player)}">
+                        ${this.escapeHTML(device.estatus_player)}
+                    </span>
+                </td>
+
+                <td>
+                    <button type="button"
+                            class="m-btn"
+                            data-detail="${this.escapeHTML(device.id_player)}">
+                        Ver detalles
+                    </button>
+                </td>
+
+            </tr>
+        `).join('');
+
+        $('#devices').html(`
+            <div class="m-card table-wrap">
+
+                <table class="m-table devices-table">
+
+                    <thead>
+                        <tr>
+                            <th>Dispositivo</th>
+                            <th>MAC</th>
+                            <th>Región</th>
+                            <th>Contenido</th>
+                            <th>Estado</th>
+                            <th>Estatus</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                </table>
+
+            </div>
+        `);
+
+    }
+
+    // ========================================================
+    // PAGINACIÓN
+    // ========================================================
+
+    renderPagination(total, size, totalPages) {
+
+        const start = (this.currentPage - 1) * size + 1;
+
+        const end = Math.min(
+            this.currentPage * size,
+            total
+        );
+
+        $('#page-caption').text(
+            total > 0
+                ? `Mostrando ${start}–${end} de ${total} dispositivos`
+                : '0 dispositivos'
+        );
+
+        let buttons = `
+            <button type="button"
+                    data-page="${this.currentPage - 1}"
+                    ${this.currentPage === 1 ? 'disabled' : ''}
+                    aria-label="Anterior">
+                ‹
+            </button>
+        `;
+
+        for (let page = 1; page <= totalPages; page++) {
+
+            buttons += `
+                <button type="button"
+                        data-page="${page}"
+                        class="${page === this.currentPage ? 'active' : ''}">
+                    ${page}
+                </button>
+            `;
+
+        }
+
+        buttons += `
+            <button type="button"
+                    data-page="${this.currentPage + 1}"
+                    ${this.currentPage === totalPages ? 'disabled' : ''}
+                    aria-label="Siguiente">
+                ›
+            </button>
+        `;
+
+        $('#pages').html(buttons);
+
+    }
+
+
+    // ========================================================
+    // MODAL DE DETALLES
+    // ========================================================
+
+    openModal(id_player) {
+
+        const device = this.devices.find(
+            item => String(item.id_player) === String(id_player)
+        );
+
+        if (!device) {
+            return;
+        }
+
+        const details = [
+            ['ID', "PLYR -" + device.id_player],
+            ['Sucursal', device.sucursal],
+            ['Modelo', device.modelo_player],
+            ['Dirección IP', device.ip_player],
+            ['Dirección MAC', device.direccion_mac],
+            ['Región', device.estado],
+            ['Contenido', device.ultimo_contenido_reportado],
+            ['Playlist', device.ultima_playlist_reportada],
+            ['Estado conexión', device.estatus_player],           
+            ['Reproducción', device.estado_reproduccion],
+            ['Último reporte', this.formatDate(device.ultima_fecha_comunicacion)]
+        ];
+
+        const rows = details.map(([label, value]) => `
+            <div class="modal-row">
+
+                <span>
+                    ${this.escapeHTML(label)}
+                </span>
+
+                <strong>
+                    ${this.escapeHTML(value)}
+                </strong>
+
+            </div>
+        `).join('');
+
+        const storage = this.getStorageInfo(
+            device.ultimo_espacio_disponible,
+            device.capacidad_almacenamiento
+        );
+
+        let almacenamientoHTML = '';
+
+        if (storage) {
+
+            const unidad = this.escapeHTML(device.unidad_almacenamiento || 'GB');
+
+            almacenamientoHTML = `
+                <div class="mt-4 progressBar-content">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold">Almacenamiento</span>
+                        <span class="small text-muted">
+                            ${storage.utilizado.toFixed(2)} ${unidad} / ${storage.total.toFixed(2)} ${unidad}
+                        </span>
+                    </div>
+
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar ${storage.color} progress-bar-striped progress-bar-animated"
+                             role="progressbar"
+                             style="width: ${storage.porcentaje}%;"
+                             aria-valuenow="${storage.porcentaje}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-2">
+                        <small class="text-muted">
+                            ${storage.disponible.toFixed(2)} ${unidad} disponibles
+                        </small>
+                        <small class="text-muted">
+                            ${storage.porcentaje.toFixed(1)}% utilizado
+                        </small>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        $('#modal-title').text(device.sucursal || 'Detalle del dispositivo');
+        $('#modal-body').html(rows + almacenamientoHTML);
+
+
+
+        // Abrir modal con Bootstrap
+        const modalElement = document.getElementById('modal-detallesPlayer');
+
+        // Colocar el modal directamente dentro del body
+        if (modalElement.parentElement !== document.body) {
+            document.body.appendChild(modalElement);
+        }
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+        modal.show();
+
+    }
+
+    closeModal() {
+
+        const modalElement = document.getElementById('modal-detallesPlayer');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+
+        if (modal) {
+            modal.hide();
+        }
+
+    }
+
+
+    // ========================================================
+    // UTILIDADES
+    // ========================================================
+       
+    escapeHTML(value) {
+
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+
+        }[character]));
+
+    }
+
+    getStatusClass(estatus_player) {
+
+        switch (estatus_player) {
+
+            case "En línea":
+                return 'online';
+
+            case "Sin conexión":
+                return 'offline';
+
+            case "Sin reporte":
+                return 'no-report';
+
+            default:
+                return '';
+        }
+
+    }
+
+    getEstadoSincronizacion(estado_sincronizacion) {
+
+        switch (estado_sincronizacion) {
+
+            case "Sincronizado":
+                return 'sincronizado';
+
+            case "Actualizando":
+                return 'actualizando';
+
+            case "Pendiente":
+                return 'pendiente';
+
+            case "Error":
+                return 'error';
+
+            default:
+                return '';
+        }
+
+    }
+
+    // Formatear fechas
+    formatDate(fecha) {
+        if (!fecha) return 'Sin información';
+
+        const date = new Date(fecha);
+
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+
+        return date.toLocaleString('es-MX', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    }
+
+    // Calculo para progressbar de almacenamiento
+    getStorageInfo(disponible, total) {
+
+        disponible = Number(disponible);
+        total = Number(total);
+
+        if (!Number.isFinite(disponible) ||
+            !Number.isFinite(total) ||
+            total <= 0) {
+            return null;
+        }
+
+        const utilizado = Math.max(0, total - disponible);
+
+        const porcentaje = Math.min(
+            100,
+            Math.max(0, (utilizado / total) * 100)
+        );
+
+        const color = porcentaje >= 90
+            ? 'bg-danger'
+            : porcentaje >= 75
+                ? 'bg-warning'
+                : 'bg-success';
+
+        return {
+            disponible,
+            total,
+            utilizado,
+            porcentaje,
+            color
+        };
+    }
+}
+
+
+// ============================================================
+// INSTANCIA DE CLASE
+// ============================================================
+
+const MonitoreoCs = new Monitoreo();
+
+
+// ============================================================
+// DOCUMENT READY
+// ============================================================
+
+$(document).ready(function () {
+
+    MonitoreoCs.init().catch(error => {
+
+        console.error('Error no controlado en Monitoreo:', error);
+
+    });
+
+    // Actualización de información de los players
+    $('#refresh').on('click', async () => {
+        await MonitoreoCs.cargarPlayers();
+    });
+
+});

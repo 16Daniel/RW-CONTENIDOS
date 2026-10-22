@@ -1,0 +1,47 @@
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Compilaciones
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Paquetes NuGet
+**/packages/*
+!**/packages/build/
+*.nupkg
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+*.cache
+
+# Archivos locales
+*.pidb
+*.svd
+*.pdb
+
+# Publicaciones
+**/PublishProfiles/*.pubxml.user
+*.publishsettings
+
+# Datos locales
+**/App_Data/*.mdf
+**/App_Data/*.ldf
+
+# Configuración sensible local
+.env
+.env.*
+
+
+# Configuración local con credenciales
+/DigitalSignagePWeb/Web.config

@@ -1,0 +1,174 @@
+﻿
+@{
+    ViewBag.Title = "Cuenta y configuraciones";
+}
+
+<main class="main-content main-content-cuenta" id="main-content" ObtenerAreas="@Url.Action("ObtenerAreas", "Usuarios")" ObtenerSucursales="@Url.Action("ObtenerSacursales", "Usuarios")" ObtenerRol="@Url.Action("ObtenerRoles", "Usuarios")"  ActualizarInfoUsuario="@Url.Action("ActualizarInfoUsuario", "Usuarios")">
+    <div class="section__content section__content--p30">
+        <div class="container-fluid">
+            <div class="page-header">
+                <div>
+                    <h1>Perfil y Configuraciones</h1>
+                    <p class="subtitle">Administra tu perfil y seguridad</p>
+                </div>
+                <div class="page-header__actions">
+                    <button type="button" class="m-btn m-btn--ghost" onclick="">Cancelar</button>
+                    <button type="button" class="m-btn m-btn--primary" id="btnGuardar">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>Guardar
+                    </button>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs settings-tabs" role="tablist" style="border-bottom: 1px solid var(--m-divider); margin-bottom: 24px;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-account" type="button" role="tab">
+                        <i class="fa-solid fa-user" aria-hidden="true"></i> Perfil
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-security" type="button" role="tab">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Seguridad
+                    </button>
+                </li>
+
+            </ul>
+
+            <div class="tab-content">
+                <!-- Perfil -->
+                <div class="tab-pane fade show active" id="tab-account" role="tabpanel">
+                    <div class="row row-tight">
+                        <!-- Selección foto de perfil -->
+                        <div class="col-lg-4">
+                            <section class="m-card">
+                                <header class="m-card__header">
+                                    <div>
+                                        <h2 class="m-card__title">Foto de perfil</h2>
+                                        <p class="m-card__subtitle">JPG, PNG or GIF, up to 2 MB.</p>
+                                    </div>
+                                </header>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 8px 0;">
+                                    <img src="~/Content/Admin/images/icon/avatar-01.jpg" alt="" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--m-surface); box-shadow: 0 4px 16px rgba(15,23,42,0.10);">
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="m-btn m-btn--primary"><i class="fa-solid fa-cloud-arrow-up"></i> Actualizar</button>
+                                        <button type="button" class="m-btn m-btn--ghost"><i class="fa-regular fa-trash-can"></i> Eliminar</button>
+                                    </div>
+                                </div>
+                            </section>
+
+                        </div>
+
+                        <!-- Sección información general  -->
+                        <div class="col-lg-8">
+                            <section class="m-card">
+                                <header class="m-card__header">
+                                    <div>
+                                        <h2 class="m-card__title">Información personal</h2>
+                                        <p class="m-card__subtitle">Actualizar tu información general.</p>
+                                    </div>
+                                </header>
+                                <form id="formInfoCuenta" class="needs-validation" novalidate>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group">
+                                            <label for="first-name">Nombre</label>
+                                            <input id="nombre" type="text" class="form-control" value="" placeholder="Ingresa tu nombre" required>
+                                            <div class="invalid-feedback">
+                                                Ingrese el nombre.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="last-name">Apellido paterno</label>
+                                            <input id="apellidoPat" type="text" class="form-control" value="" placeholder="Ingresa tu apellido paterno" required>
+                                            <div class="invalid-feedback">
+                                                Ingrese el apellido paterno.
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 form-group mb-3">
+                                            <label for="last-name">Apellido materno</label>
+                                            <input id="apellidoMat" type="text" class="form-control" value="" placeholder="Ingresa tu apellido materno" required>
+                                            <div class="invalid-feedback">
+                                                Ingrese el apellido materno.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email">Correo</label>
+                                        <input id="correo" type="email" class="form-control" value="" placeholder="Ingresa tu correo" disabled>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 form-group">
+                                            <label for="area">Área</label>
+                                            <select id="area" class="form-select" required>
+                                                <option value="" selected disabled>Selecciona el área</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Seleccione un área.
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 form-group">
+                                            <label for="sucursal">Sucursal</label>
+                                            <select id="sucursal" class="form-select" required>
+                                                <option value="" selected disabled>Selecciona la sucursal</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Seleccione una sucursal.
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 form-group">
+                                            <label for="rol">Rol</label>
+                                            <select id="rol" class="form-select" required>
+                                                <option value="" selected disabled>Selecciona el rol</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Seleccione un rol.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seguridad -->
+                <div class="tab-pane fade" id="tab-security" role="tabpanel">
+                    <div class="row row-tight">
+                        <div class="col-lg-10">
+                            <section class="m-card">
+                                <header class="m-card__header">
+                                    <div>
+                                        <h2 class="m-card__title">Actualizar contraseña</h2>
+                                        <p class="m-card__subtitle">Utiliza al menos 12 caracteres que combinen letras, numeros y simbolos. </p>
+                                    </div>
+                                </header>
+                                <form onsubmit="">
+                                    <div class="form-group">
+                                        <label for="password">Contraseña actual</label>
+                                        <input id="password" type="password" class="form-control" placeholder="Ingresa la contraseña actual">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-pw">Nueva contraseña</label>
+                                        <input id="new-pw" type="password" class="form-control" placeholder="Ingresa la nueva contraseña">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirm-pw">Confirma la nueva contraseña</label>
+                                        <input id="confirm-pw" type="password" class="form-control" placeholder="Confirma la nueva contraseña">
+                                    </div>
+                                    <button type="submit" class="m-btn m-btn--primary">Actualizar contraseña</button>
+                                </form>
+                            </section>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+@section scripts {
+    <script src="~/Scripts/Usuarios/Cuenta.js"></script>
+}

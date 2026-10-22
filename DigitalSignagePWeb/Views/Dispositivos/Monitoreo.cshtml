@@ -1,0 +1,170 @@
+﻿
+@{
+    ViewBag.Title = "Monitor de Dispositivos";
+}
+
+<link rel="stylesheet" href="~/Content/Styles-Mod/Monitoreo/monitoreo-dispositivos.css">
+
+<main class="main-content main-content-monitoreo" id="main-content" ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
+      ObtenerEstatusPlayer="@Url.Action("ObtenerEstatusPlayer", "Dispositivos")"
+      ObtenerPlayers="@Url.Action("ObtenerPlayers", "Dispositivos")">
+    <div class="section__content section__content--p30">
+        <div class="container-fluid">
+            <div class="page-header">
+                <div>
+                    <h1>
+                        Monitoreo de Dispositivos
+                    </h1>
+                    <p class="subtitle">
+                        Supervisa la conexión y el estado de los players.
+                    </p>
+
+                </div>
+                <div class="page-header__actions">
+                    <button class="m-btn m-btn--primary" id="refresh" type="button"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+                </div>
+            </div>
+
+            <!-- Sección: Estados de players -->
+            <div class="row row-tight">
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card monitor-stat">
+                        <div class="stat-card__head"><p class="stat-card__label">Total dispositivos</p><span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-desktop"></i></span></div>
+                        <p class="stat-card__value" id="count-total">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card monitor-stat">
+                        <div class="stat-card__head"><p class="stat-card__label">Conectados</p><span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-circle-check"></i></span></div>
+                        <p class="stat-card__value monitor-online" id="count-online">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card monitor-stat">
+                        <div class="stat-card__head"><p class="stat-card__label">Desconectados</p><span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-circle-xmark"></i></span></div>
+                        <p class="stat-card__value monitor-offline" id="count-offline">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card monitor-stat">
+                        <div class="stat-card__head"><p class="stat-card__label">Sin reporte</p><span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-circle-question"></i></span></div>
+                        <p class="stat-card__value monitor-unknown" id="count-unknown">0</p>
+                    </article>
+                </div>
+            </div>
+
+            <!-- Filtros de dispositivos -->
+            <div class="m-card mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- Buscar dispositivo -->
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label for="search" class="form-label small">
+                            Buscar
+                        </label>
+                        <input type="text" id="search" class="form-control small" placeholder="Nombre, MAC, IP o ID...">
+                    </div>
+
+                    <!-- Sucursal -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="region" class="form-label small">
+                            Región
+                        </label>
+                        <select id="region" class="form-select small">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+
+                    <!-- Estatus -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="estatus" class="form-label small">
+                            Estatus
+                        </label>
+                        <select id="estatus" class="form-select small">
+                            <option value="">Todos</option>
+                            <option value="online">En línea</option>
+                            <option value="offline">Sin conexión</option>
+                            <option value="unknown">Sin reporte</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="col-12 col-xl-2">
+                        <div class="d-flex gap-2">
+                            <button type="button" id="btn-search" class="m-btn m-btn--primary flex-fill justify-content-center" title="Buscar" aria-label="Buscar">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+
+                            <button type="button" id="clear"
+                                    class="m-btn m-btn--ghost flex-fill justify-content-center" title="Limpiar" aria-label="Limpiar">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="monitor-toolbar mb-3">
+                <h2 class="monitor-section-title">Dispositivos</h2>
+                <div class="monitor-toolbar-actions">
+                    <span class="monitor-result-count" id="result-count"></span>
+                    <div class="btn-group" role="group" aria-label="Tipo de vista">
+                        <button class="btn btn-outline-secondary selected" type="button" id="grid-btn" aria-label="Vista tarjetas"><i class="fa-solid fa-border-all"></i></button>
+                        <button class="btn btn-outline-secondary" type="button" id="table-btn" aria-label="Vista tabla"><i class="fa-solid fa-list"></i></button>
+                    </div>
+                    <select class="form-select monitor-page-size" id="page-size" aria-label="Resultados por página"><option value="6">6 por página</option><option value="12" selected>12 por página</option><option value="24">24 por página</option></select>
+                </div>
+            </div>
+            <hr />
+
+            <!-- Sección: Muestra todos los players de las sucursarles (Se arma de manera dinamica) -->
+            <div id="devices" aria-live="polite"></div>
+
+            <!-- Paginación para mostrar los players -->
+            <div class="monitor-pagination mt-4">
+                <span id="page-caption"></span>
+                <nav aria-label="Paginación"><div class="pages" id="pages"></div></nav>
+            </div>
+
+
+        </div>
+    </div>
+</main>
+
+
+<div class="modal fade" id="modal-detallesPlayer" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">
+                    Detalle del dispositivo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                </button>
+            </div>
+            <!-- Sección: Información de players -->
+            <div class="modal-body" id="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="modal-close" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const raspberryImageUrl = '@Url.Content("~/Content/Admin/images/icon/RaspberryPi3.png")';
+</script>
+
+@section scripts {
+    <script src="~/Scripts/Models/Players.js"></script>
+    <script src="~/Scripts/Dispositivos/Monitoreo.js"></script>
+}
+
+
+
+

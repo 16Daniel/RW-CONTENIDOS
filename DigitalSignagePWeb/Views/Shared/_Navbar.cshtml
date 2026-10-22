@@ -1,0 +1,86 @@
+﻿<header class="header-desktop">
+    <div class="section__content section__content--p30">
+        <div class="container-fluid">
+            <div class="header-wrap">
+                <button class="sidebar-toggle js-sidebar-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-sidebar"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+                <form class="form-header" role="search" onsubmit="return false">
+                    <i class="fa-solid fa-magnifying-glass form-header__icon" aria-hidden="true"></i>
+                    <input class="au-input au-input--xl" type="search" name="search" placeholder="Buscar modulo..." aria-label="Search"><kbd class="form-header__hint" aria-hidden="true">⌘K</kbd>
+                </form>
+                <div class="header-button">
+                    <div class="noti-wrap">
+
+                        <div class="noti__item js-item-menu" role="button" tabindex="0" aria-haspopup="true" aria-label="Notifications">
+                            <i class="fa-solid fa-bell"></i><span class="quantity">3</span>
+                            <div class="notifi-dropdown js-dropdown">
+                                <div class="notifi__title">
+                                    <p>You have 3 Notifications</p>
+                                </div>
+                                <div class="notifi__item">
+                                    <div class="bg-c1 img-cir img-40"><i class="fa-solid fa-envelope-open"></i></div>
+                                    <div class="content">
+                                        <p>You got a email notification</p><span class="date">January 15, 2025 14:30</span>
+                                    </div>
+                                </div>
+                                <div class="notifi__item">
+                                    <div class="bg-c2 img-cir img-40"><i class="fa-solid fa-id-card"></i></div>
+                                    <div class="content">
+                                        <p>Your account has been blocked</p><span class="date">January 15, 2025 14:30</span>
+                                    </div>
+                                </div>
+                                <div class="notifi__item">
+                                    <div class="bg-c3 img-cir img-40"><i class="fa-solid fa-file-lines"></i></div>
+                                    <div class="content">
+                                        <p>You got a new file</p><span class="date">January 15, 2025 14:30</span>
+                                    </div>
+                                </div>
+                                <div class="notifi__footer"><a href="#">All notifications</a></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="account-wrap">
+                        <div class="account-item clearfix js-item-menu" role="button" tabindex="0" aria-haspopup="true" aria-label="Account menu">
+                            <div class="image"><img src="~/Content/Admin/images/icon/avatar-01.jpg"></div>
+                            <div class="content">
+                                <a class="js-acc-btn" href="#">
+                                    @Session["nombre"]
+                                    @Session["apellido_paterno"]
+                                </a>
+                            </div>
+                            <div class="account-dropdown js-dropdown">
+                                <div class="info clearfix">
+                                    <div class="image"><a href="#"><img src="~/Content/Admin/images/icon/avatar-01.jpg"></a></div>
+                                    <div class="content">
+                                        <h5 class="name">
+                                            <a href="#">
+                                                @Session["nombre"]
+                                                @Session["apellido_paterno"]
+                                                @Session["apellido_materno"]
+                                            </a>
+                                        </h5>
+                                        <span class="email">@Session["correo"]</span>
+                                    </div>
+                                </div>
+                                <div class="account-dropdown__body">
+                                    <div class="account-dropdown__item">
+                                        <a href="@Url.Action("Cuenta", "Usuarios")">
+                                            <i class="fa-solid fa-user"></i>Cuenta
+                                        </a>
+                                    </div>
+
+                                </div>
+                                <div class="account-dropdown__footer">
+                                    <form id="formLogout" action="@Url.Action("Logout", "Account")" method="post"></form>
+                                    <a href="#" onclick="document.getElementById('formLogout').submit(); return false;">
+                                        <i class="fa-solid fa-power-off"></i>
+                                        Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
