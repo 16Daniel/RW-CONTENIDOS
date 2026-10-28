@@ -21,7 +21,7 @@
     @Styles.Render("~/Content/loader")
 </head>
 
-<body class="app" obtenerDatosCuenta="@Url.Action("ObtenerDatosCuenta","Account")">
+<body class="app" obtenerDatosCuenta="@Url.Action("ObtenerDatosCuenta","Account")" >
     <!-- Carga del loader -->
     @Html.Partial("_Loader")
     <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
@@ -35,21 +35,12 @@
             <!-- Encabezado de la pagina -->
             @Html.Partial("_Navbar")
 
-            <main class="main-content" id="main-content">
-                <div class="section__content section__content--p30">
-                    <div class="container-fluid">
-                        <!-- Contenido de la plataforma -->
-                        <!-- Carga de todo el contenido de los modulos de manera dinamica -->
-                        @RenderBody()
+            <!-- Contenido de los módulos -->
+            @RenderBody()
 
-                        <!-- Footer -->
-                        @Html.Partial("_Footer")
+            <!-- Footer -->
+            @Html.Partial("_Footer")
 
-
-
-                    </div>
-                </div>
-            </main>
         </div>
     </div>
     <!-- Para llamadas ajax -->

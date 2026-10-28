@@ -380,7 +380,7 @@ section {
 }
 
 .main-content {
-  padding-top: 25px;
+  padding-top: 100px;
   min-height: 100vh;
 }
 
@@ -3947,17 +3947,12 @@ a:hover {
 
 /* ----- Footer ----- */
 .copyright {
-  text-align: center;
-  padding: 60px 0;
-  padding-top: 20px;
-}
-
-.copyright p {
   font-size: 14px;
   color: #666;
   line-height: 1.7142857143;
   line-height: 1.7142857143;
   line-height: 1.7142857143;
+  padding-top: 45px;
 }
 
 /* ----- Breadcrumb ----- */

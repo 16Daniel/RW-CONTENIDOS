@@ -131,6 +131,7 @@
     <Compile Include="Models\AccesoDatos.cs" />
     <Compile Include="Models\InformacionUsuario.cs" />
     <Compile Include="Models\Player.cs" />
+    <Compile Include="Models\PlayerComandos.cs" />
     <Compile Include="Models\PlayerReporteRequest.cs" />
     <Compile Include="Models\PlayerTokenValidado.cs" />
     <Compile Include="Models\UnidadAlmacenamientoPlayer.cs" />

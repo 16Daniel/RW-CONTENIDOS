@@ -12,6 +12,11 @@ namespace DigitalSignagePWeb.Models
     public class PlayerReporteRequest
     {
         /// <summary>
+        /// Id del player.
+        /// </summary>
+        public int id_player { get; set; }
+
+        /// <summary>
         /// Número de serie físico del dispositivo.
         /// </summary>
         public string numero_serie { get; set; }

@@ -224,10 +224,9 @@ namespace DigitalSignagePWeb.Controllers
                     });
                 }
 
-                // Validar los identificadores del dispositivo.
-                if (!string.Equals(request.numero_serie, player.numero_serie,
-                        StringComparison.OrdinalIgnoreCase) ||
-                    !string.Equals(request.direccion_mac, player.direccion_mac,
+                // Validar los identificadores del dispositivo del request recibido contra los del Player autenticado.
+                if (request.id_player != player.id_player ||
+                    !string.Equals(request.numero_serie, player.numero_serie,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     Response.StatusCode = 400;
@@ -294,7 +293,7 @@ namespace DigitalSignagePWeb.Controllers
                     { "id_estatus_player", "1" },
                     { "modelo_player", request.modelo_player },
                     { "numero_serie", player.numero_serie },
-                    { "direccion_mac", player.direccion_mac },
+                    { "direccion_mac", request.direccion_mac },
                     { "ip_player", request.ip_player },
                     { "version_agent", request.version_agent },
 
@@ -356,12 +355,327 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene los comandos pendientes y vigentes asignados
+        /// al Player autenticado.
+        /// </summary>
+        /// <returns>
+        /// Respuesta JSON con los comandos pendientes del Player.
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando ocurre un error al consultar los comandos.
+        /// </exception>
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult ObtenerComandosPendientes()
+        {
+            try
+            {
+                // Validar la identidad del Player mediante su token Bearer.
+                PlayerTokenValidado player = ValidarTokenConsultaPlayer();
 
-        
+                if (player == null)
+                {
+                    Response.StatusCode = 401;
+                    Response.SuppressFormsAuthenticationRedirect = true;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "Token inválido, revocado o vencido."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                // Consultar únicamente los comandos del Player autenticado.
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_player", player.id_player.ToString() }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCObtenerComandosPendientesPlayer,
+                    parametros
+                );
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                // Deserealizacion del resultado de la busqueda de comandos pendientes en SQL.
+                List<PlayerComandoPendiente> comandos = JsonConvert.DeserializeObject<List<PlayerComandoPendiente>>(resultado);
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = "Comandos pendientes consultados correctamente.",
+                    Data = comandos
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible consultar los comandos pendientes."
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
 
 
+        /// <summary>
+        /// Registra el inicio de ejecución de un comando asignado
+        /// al Player autenticado.
+        /// </summary>
+        /// <param name="request">
+        /// Identificador del comando que se desea iniciar.
+        /// </param>
+        /// <returns>
+        /// Resultado de la operación, indicando si el comando
+        /// fue iniciado correctamente.
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando ocurre un error al ejecutar el procedimiento almacenado.
+        /// </exception>
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult IniciarComandoPlayer(PlayerComandoIniciarRequest request)
+        {
+            try
+            {
+                // Validar la identidad del Player mediante su token Bearer.
+                PlayerTokenValidado player = ValidarTokenConsultaPlayer();
 
+                if (player == null)
+                {
+                    Response.StatusCode = 401;
+                    Response.SuppressFormsAuthenticationRedirect = true;
 
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "Token inválido, revocado o vencido."
+                    });
+                }
+
+                // Validar los datos recibidos.
+                if (request == null || request.id_comando_player <= 0)
+                {
+                    Response.StatusCode = 400;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El identificador del comando no es válido."
+                    });
+                }
+
+                // Preparar los parámetros del procedimiento almacenado.
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_comando_player", request.id_comando_player.ToString() },
+                    { "id_player", player.id_player.ToString() }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                // Registrar el inicio del comando en SQL Server.
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCIniciarComandoPlayer,
+                    parametros
+                );
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                // Obtener la respuesta del procedimiento almacenado.
+                List<PlayerComandoResultado> resultados =
+                    JsonConvert.DeserializeObject<List<PlayerComandoResultado>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "No se obtuvo una respuesta válida al iniciar el comando."
+                    );
+                }
+
+                PlayerComandoResultado respuesta = resultados[0];
+
+                if (respuesta.Status != "OK")
+                {
+                    Response.StatusCode = 409;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = respuesta.Message
+                    });
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = respuesta.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible iniciar el comando del Player."
+                });
+            }
+        }
+
+        /// <summary>
+        /// Registra el resultado definitivo de un comando ejecutado
+        /// por el Player autenticado.
+        /// </summary>
+        /// <param name="request">Comando, resultado y mensaje de ejecución.</param>
+        /// <returns>Confirmación del resultado registrado.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando falla la ejecución del procedimiento almacenado
+        /// o su respuesta no es válida.
+        /// </exception>
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult FinalizarComandoPlayer(PlayerComandoFinalizarRequest request)
+        {
+            try
+            {
+                PlayerTokenValidado player = ValidarTokenConsultaPlayer();
+
+                if (player == null)
+                {
+                    Response.StatusCode = 401;
+                    Response.SuppressFormsAuthenticationRedirect = true;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "Token inválido, revocado o vencido."
+                    });
+                }
+
+                if (request == null || request.id_comando_player <= 0)
+                {
+                    Response.StatusCode = 400;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El identificador del comando no es válido."
+                    });
+                }
+
+                string codigoResultado = request.codigo_resultado?.Trim();
+
+                if (codigoResultado != "Completado" && codigoResultado != "Error")
+                {
+                    Response.StatusCode = 400;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El resultado debe ser Completado o Error."
+                    });
+                }
+
+                if (request.mensaje_resultado != null &&
+                    request.mensaje_resultado.Length > 1000)
+                {
+                    Response.StatusCode = 400;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El mensaje del resultado no puede superar 1000 caracteres."
+                    });
+                }
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_comando_player", request.id_comando_player.ToString() },
+                    { "id_player", player.id_player.ToString() },
+                    { "codigo_resultado", codigoResultado },
+                    { "mensaje_resultado", request.mensaje_resultado }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                string resultado = accesoDatos.ExecuteProcedure(accesoDatos.GCFinalizarComandoPlayer, parametros);
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                List<PlayerComandoFinalizarResultado> resultados = JsonConvert.DeserializeObject<List<PlayerComandoFinalizarResultado>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "No se obtuvo una respuesta válida al finalizar el comando."
+                    );
+                }
+
+                PlayerComandoFinalizarResultado respuesta = resultados[0];
+
+                if (respuesta.Status != "OK")
+                {
+                    Response.StatusCode = 409;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = respuesta.Message
+                    });
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = respuesta.Message,
+                    Data = new
+                    {
+                        respuesta.id_comando_player,
+                        respuesta.id_player,
+                        respuesta.codigo_resultado
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible finalizar el comando del Player."
+                });
+            }
+        }
 
     }
 }

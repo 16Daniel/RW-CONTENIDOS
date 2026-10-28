@@ -10,6 +10,7 @@ class Monitoreo {
     constructor() {
 
         this.devices = [];
+        this.estatusPlayers = [];
 
         this.currentPage = 1;
         this.view = 'grid';
@@ -24,6 +25,11 @@ class Monitoreo {
             ? raspberryImageUrl
             : '';
 
+        this.comandoActualId = null;
+
+        this.progresoTimer = null;
+        this.consultandoProgreso = false;
+        this.solicitudFinalizada = false;
     }
 
 
@@ -310,7 +316,15 @@ class Monitoreo {
 
     updateCounters() {
 
+        // Total de dispositivos registrados
         $('#count-total').text(this.devices.length);
+
+        // Relación entre los estatus de SQL Server y los KPI del HTML
+        const estatusKPI = {
+            1: '#count-online',
+            2: '#count-offline',
+            3: '#count-unknown'
+        };
 
         this.estatusPlayers.forEach(estatus => {
 
@@ -320,7 +334,11 @@ class Monitoreo {
                     String(estatus.id_estatus_player)
             ).length;
 
-            $('#count-' + estatus.id_estatus_player).text(count);
+            const selector = estatusKPI[estatus.id_estatus_player];
+
+            if (selector) {
+                $(selector).text(count);
+            }
 
         });
 
@@ -398,7 +416,7 @@ class Monitoreo {
             this.render();
 
         });
-              
+
 
     }
         
@@ -815,6 +833,161 @@ class Monitoreo {
 
 
     // ========================================================
+    // MODALES
+    // ========================================================
+
+    /**
+    * Crea una solicitud de actualización de información
+    * para los Players registrados.
+    */
+    async crearSolicitudActualizacion() {
+        const $btn = $('#refresh');
+
+        try {
+            $btn.prop('disabled', true);
+
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('CrearComandoPlayer'),
+                type: 'POST',
+                dataType: 'json'
+            });
+
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No se pudo crear la solicitud.');
+            }
+
+            const data = response.Data;
+            this.solicitudFinalizada = false;
+
+            this.comandoActualId = data.id_comando_player;
+
+            
+
+            $('#progreso-solicitud').text(`Solicitud #${this.comandoActualId}`);
+            $('#progreso-total').text(data.total_players);
+
+            const modalElement = document.getElementById('modal-progreso-comando');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+            modal.show();
+
+            // Consultar inmediatamente el estado de la solicitud.
+            await this.consultarProgresoComando();
+
+            // Iniciar consultas periódicas si la solicitud sigue activa.
+            if (this.progresoTimer === null &&
+                !this.solicitudFinalizada) {
+                this.iniciarConsultaProgreso();
+            }
+          
+
+        } catch (error) {
+            console.error('Error al crear la solicitud:', error);
+
+            Alerts.error(
+                error.responseJSON?.Message ||
+                error.responseJSON?.message ||
+                error.message ||
+                error.responseText ||
+                'No fue posible crear la solicitud.'
+            );
+
+        } finally {
+            $btn.prop('disabled', false);
+        }
+    }
+
+    /**
+    * Consulta el progreso de una solicitud de actualización
+    * utilizando su identificador.
+    */
+    async consultarProgresoComando() {
+
+        //Se protege para que no envíe otra petición mientras la anterior sigue ejecutándose.
+        if (this.consultandoProgreso) {
+            return;
+        }
+
+        this.consultandoProgreso = true;
+
+        try {
+            if (!this.comandoActualId) {
+                throw new Error('No existe una solicitud para consultar.');
+            }
+                        
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('ObtenerProgresoComandoPlayer'),
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    id_comando_player: this.comandoActualId
+                }
+            });
+
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No se pudo consultar el progreso.');
+            }
+
+            const data = response.Data;
+
+            // Actualizar los indicadores del modal.
+            $('#progreso-total').text(data.total_players);
+            $('#progreso-pendientes').text(data.pendientes);
+            $('#progreso-en-proceso').text(data.en_proceso);
+            $('#progreso-completados').text(data.completados);
+            $('#progreso-errores').text(data.errores);
+            $('#progreso-expirados').text(data.expirados);
+
+            // Calcular el porcentaje de dispositivos finalizados.
+            const porcentaje = data.total_players > 0
+                ? Math.round((data.finalizados / data.total_players) * 100)
+                : 0;
+
+            // Actualizar el porcentaje y la barra de progreso.
+            $('#progreso-porcentaje').text(`${porcentaje}%`);
+
+            const esperando = porcentaje === 0 && data.estatus_general !== 'Finalizado';
+
+            $('#progreso-contenedor')
+                .toggleClass('progress-indeterminate', esperando);
+
+            $('#progreso-barra')
+                .css('width', `${porcentaje}%`);
+
+            $('#progreso-contenedor').attr('aria-valuenow', porcentaje);
+
+            // Mostrar el estado general de la solicitud.
+            $('#progreso-estado').text(this.formatearEstatus(data.estatus_general));
+
+            // Detiene el temporizador cuando termine la solicitud
+            // Con esto, cuando todos los Players hayan terminado, se deja de consultar innecesariamente.
+            if (data.estatus_general === 'Finalizado' ||
+                (data.total_players > 0 && data.finalizados >= data.total_players)) {
+
+                this.solicitudFinalizada = true;
+                this.detenerConsultaProgreso();
+
+                
+                // Recargar las tarjetas con la información actualizada.
+                await this.cargarPlayers();
+            }
+
+        } catch (error) {
+            console.error('Error al consultar el progreso:', error);
+
+            Alerts.error(
+                error.responseJSON?.Message ||
+                error.responseJSON?.message ||
+                error.message ||
+                error.responseText ||
+                'No fue posible consultar el progreso.'
+            );
+        } finally {
+            this.consultandoProgreso = false;
+        }
+    }
+
+    // ========================================================
     // UTILIDADES
     // ========================================================
        
@@ -924,6 +1097,43 @@ class Monitoreo {
             color
         };
     }
+
+    /**
+    * Formatea el nombre de un estatus para mostrarlo en la interfaz.
+    *
+    * @param {string} estatus - Estatus recibido desde el servidor.
+    * @returns {string} Estatus con formato legible.
+    */
+    formatearEstatus(estatus) {
+        if (!estatus) {
+            return '';
+        }
+
+        return estatus.replaceAll('_', ' ');
+    }
+
+    /**
+    * Inicia la consulta automática del progreso cada 3 segundos.
+    */
+    iniciarConsultaProgreso() {
+        this.detenerConsultaProgreso();
+
+        this.progresoTimer = setInterval(() => {
+            if (!this.consultandoProgreso) {
+                this.consultarProgresoComando();
+            }
+        }, 3000);
+    }
+
+    /**
+    * Detiene las consultas automáticas del progreso.
+    */
+    detenerConsultaProgreso() {
+        if (this.progresoTimer !== null) {
+            clearInterval(this.progresoTimer);
+            this.progresoTimer = null;
+        }
+    }
 }
 
 
@@ -946,9 +1156,36 @@ $(document).ready(function () {
 
     });
 
-    // Actualización de información de los players
+    /**
+    * Gestiona la actualización de información de los Players.
+    *
+    * Si existe una solicitud activa, abre nuevamente el modal y consulta
+    * su progreso sin generar un comando adicional.
+    *
+    * Si no existe una solicitud activa o la anterior ya finalizó,
+    * crea una nueva solicitud de actualización.
+    */
     $('#refresh').on('click', async () => {
-        await MonitoreoCs.cargarPlayers();
+
+        // Verificar si existe una solicitud pendiente o en proceso.
+        if (MonitoreoCs.comandoActualId && !MonitoreoCs.solicitudFinalizada) {
+
+            // Recuperar la instancia del modal de progreso y mostrarla.
+            const modalElement = document.getElementById('modal-progreso-comando');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+            modal.show();
+
+            // Consultar el estado actual sin generar un nuevo comando.
+            await MonitoreoCs.consultarProgresoComando();
+
+        } else {
+
+            // Crear una nueva solicitud cuando no exista otra activa.
+            await MonitoreoCs.crearSolicitudActualizacion();
+
+        }
+
     });
 
 });

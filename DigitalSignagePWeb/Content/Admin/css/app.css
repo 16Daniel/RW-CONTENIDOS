@@ -8302,3 +8302,32 @@ body.app.auth-page .login-checkbox input[type=checkbox]:focus-visible {
     color: #570e1d !important;
 }
 
+
+/* Animación de espera para el progreso de comandos */
+#progreso-barra {
+    transition: width 1.2s ease-in-out;
+}
+
+#progreso-contenedor {
+    position: relative;
+    overflow: hidden;
+}
+
+    #progreso-contenedor.progress-indeterminate::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient( 90deg, #e5e7eb 0%, #cbd5e1 50%, #e5e7eb 100% );
+        background-size: 200% 100%;
+        animation: progress-loading 1.5s linear infinite;
+    }
+
+@keyframes progress-loading {
+    from {
+        background-position: 200% 0;
+    }
+
+    to {
+        background-position: -200% 0;
+    }
+}

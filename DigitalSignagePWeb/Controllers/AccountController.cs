@@ -94,7 +94,7 @@ namespace DigitalSignagePWeb.Controllers
                 1,                            // versión
                 correo,                       // nombre de usuario
                 DateTime.Now,                 // fecha de creación
-                DateTime.Now.AddMinutes(20),  // expira (igual que el timeout del Web.config)
+                DateTime.Now.Add(FormsAuthentication.Timeout),  // expira (igual que el timeout del Web.config)
                 false,                        // no persistente
                 rol);                         // el rol viaja aquí
 
@@ -192,7 +192,7 @@ namespace DigitalSignagePWeb.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
         }
-
+                
         [HttpPost]
         //[ValidateAntiForgeryToken]
         [Authorize]

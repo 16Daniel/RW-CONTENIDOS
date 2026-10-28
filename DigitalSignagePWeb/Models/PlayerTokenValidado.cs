@@ -20,10 +20,6 @@ namespace DigitalSignagePWeb.Models
         /// Número de serie registrado del dispositivo.
         /// </summary>
         public string numero_serie { get; set; }
-
-        /// <summary>
-        /// Dirección MAC registrada del dispositivo.
-        /// </summary>
-        public string direccion_mac { get; set; }
+             
     }
 }

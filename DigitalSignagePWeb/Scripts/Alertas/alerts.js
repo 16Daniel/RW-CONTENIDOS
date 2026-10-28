@@ -38,6 +38,10 @@ const Alerts = {
     success(message, title = "Listo") {
         return Modal.fire({ icon: "success", title, text: message, timer: 2000, showConfirmButton: false });
     },
+    info(message, title = "Información") {
+        return Modal.fire({icon: "info", title, text: message, timer: 3000, showConfirmButton: false
+        });
+    },
     async confirm(message, title = "¿Estás seguro?") {
         const r = await Modal.fire({
             icon: "question", title, text: message,

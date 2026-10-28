@@ -56,7 +56,7 @@ namespace DigitalSignagePWeb.Models
             {
                 return @"DECLARE @TokenHash BINARY(32);
                             SET @TokenHash = CONVERT(BINARY(32), @hash_hex, 2);
-                        EXEC dbo.SpOpMxDS_ValidarTokenConsultaPlayer @token_hash = @TokenHash;";
+                        EXEC SpOpMxDS_ValidarTokenConsultaPlayer @token_hash = @TokenHash;";
             }
         }
 
@@ -67,7 +67,7 @@ namespace DigitalSignagePWeb.Models
         {
             get
             {
-                return "EXEC dbo.SpOpMxDS_ObtenerUnidadAlmacenamientoPlayer @id_player;";
+                return "EXEC SpOpMxDS_ObtenerUnidadAlmacenamientoPlayer @id_player;";
             }
         }
 
@@ -79,7 +79,7 @@ namespace DigitalSignagePWeb.Models
             get
             {
                 return @"
-                    EXEC dbo.SpOpMxDS_ActualizarInformacionPlayer
+                    EXEC SpOpMxDS_ActualizarInformacionPlayer
                         @id_player,
                         @id_estatus_player,
                         @modelo_player,
@@ -97,7 +97,32 @@ namespace DigitalSignagePWeb.Models
             }
         }
 
-        
+        /// <summary>
+        /// Registra una solicitud de comando dirigida a todos los Players.
+        /// </summary>
+        public string GCCrearComandoPlayer = "EXEC SpOpMxDS_CrearComandoPlayer @codigo_tipo_comando, @minutos_expiracion";
+
+        /// <summary>
+        /// Consulta los comandos pendientes de un Player específico. Cada Raspberry consultara únicamente los comandos 
+        /// que tiene asignados.
+        /// </summary> 
+        public string GCObtenerComandosPendientesPlayer = "EXEC SpOpMxDS_ObtenerComandosPendientesPlayer @id_player";
+
+        /// <summary>
+        /// Registra el inicio de ejecución de un comando por un Player.
+        /// </summary>
+        public string GCIniciarComandoPlayer = "EXEC SpOpMxDS_IniciarComandoPlayer @id_comando_player, @id_player";
+
+        /// <summary>
+        /// Registra el resultado de un comando ejecutado por un Player y actualiza el estado general de la solicitud.
+        /// </summary>
+        public string GCFinalizarComandoPlayer = "EXEC SpOpMxDS_FinalizarComandoPlayer @id_comando_player, @id_player, @codigo_resultado, @mensaje_resultado";
+
+        /// <summary>
+        /// Consulta el progreso general de una solicitud de comandos y sus detalles.
+        /// </summary>
+        public string GCObtenerProgresoComandoPlayer = "EXEC SpOpMxDS_ObtenerProgresoComandoPlayer @id_comando_player";
+
         #endregion
 
         #region SQLFunctions

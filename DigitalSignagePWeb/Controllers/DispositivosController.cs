@@ -169,6 +169,177 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
+        /// <summary>
+        /// Genera una solicitud de actualización de información
+        /// para todos los Players registrados.
+        /// </summary>
+        /// <returns>Identificador de la solicitud y total de destinatarios.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando no es posible crear la solicitud en SQL Server.
+        /// </exception>
+        [HttpPost]
+        [Authorize]
+        public ActionResult CrearComandoPlayer()
+        {
+            try
+            {
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "codigo_tipo_comando", "REPORTAR_INFO" },
+                    { "minutos_expiracion", "2" }
+                };
+
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCCrearComandoPlayer,
+                    parametros
+                );
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                List<PlayerComandoCreadoResultado> resultados =
+                    JsonConvert.DeserializeObject<List<PlayerComandoCreadoResultado>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "No se obtuvo una respuesta válida al crear la solicitud."
+                    );
+                }
+
+                PlayerComandoCreadoResultado comando = resultados[0];
+
+                if (comando.Status != "OK" || comando.id_comando_player <= 0)
+                {
+                    throw new InvalidOperationException(
+                        "SQL Server no confirmó la creación de la solicitud."
+                    );
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = "Solicitud de actualización creada correctamente.",
+                    Data = new
+                    {
+                        comando.id_comando_player,
+                        comando.total_players
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible crear la solicitud de actualización."
+                });
+            }
+        }
+
+
+        /// <summary>
+        /// Consulta el progreso de una solicitud de comandos,
+        /// incluyendo sus resultados pendientes, completados,
+        /// fallidos y expirados.
+        /// </summary>
+        /// <param name="id_comando_player">Identificador de la solicitud.</param>
+        /// <returns>Información general y contadores de progreso.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando falla la consulta o su respuesta es inválida.
+        /// </exception>
+        [HttpGet]
+        [Authorize]
+        public ActionResult ObtenerProgresoComandoPlayer(int id_comando_player)
+        {
+            try
+            {
+                if (id_comando_player <= 0)
+                {
+                    Response.StatusCode = 400;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El identificador del comando no es válido."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_comando_player", id_comando_player.ToString() }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCObtenerProgresoComandoPlayer,
+                    parametros
+                );
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                List<PlayerComandoProgreso> resultados =
+                    JsonConvert.DeserializeObject<List<PlayerComandoProgreso>>(resultado);
+
+                if (resultados == null || resultados.Count == 0)
+                {
+                    Response.StatusCode = 404;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "No se encontró la solicitud de comandos."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (resultados.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "La consulta devolvió más de una solicitud."
+                    );
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = "Progreso consultado correctamente.",
+                    Data = resultados[0]
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible consultar el progreso del comando."
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+
+
+
         #endregion
     }
 }

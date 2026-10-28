@@ -7,7 +7,9 @@
 
 <main class="main-content main-content-monitoreo" id="main-content" ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
       ObtenerEstatusPlayer="@Url.Action("ObtenerEstatusPlayer", "Dispositivos")"
-      ObtenerPlayers="@Url.Action("ObtenerPlayers", "Dispositivos")">
+      ObtenerPlayers="@Url.Action("ObtenerPlayers", "Dispositivos")"
+      CrearComandoPlayer="@Url.Action("CrearComandoPlayer", "Dispositivos")"
+      ObtenerProgresoComandoPlayer="@Url.Action("ObtenerProgresoComandoPlayer", "Dispositivos")">
     <div class="section__content section__content--p30">
         <div class="container-fluid">
             <div class="page-header">
@@ -132,7 +134,7 @@
     </div>
 </main>
 
-
+@* Modal para verlos detalles del player *@
 <div class="modal fade" id="modal-detallesPlayer" tabindex="-1" aria-labelledby="modal-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -150,6 +152,43 @@
                 <button type="button" class="btn btn-warning" id="modal-close" data-bs-dismiss="modal">
                     Cerrar
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Progreso de la solicitud REPORTAR_INFO -->
+<div class="modal fade" id="modal-progreso-comando" tabindex="-1" aria-labelledby="progreso-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="progreso-titulo">Actualización de información</h5>
+                    <small class="text-muted" id="progreso-solicitud">Preparando solicitud...</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold" id="progreso-estado">Iniciando...</span>
+                    <span class="fw-bold" id="progreso-porcentaje">0%</span>
+                </div>
+                <div class="progress mb-2" role="progressbar" aria-label="Avance de actualización" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progreso-contenedor">
+                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" id="progreso-barra" style="width:0%;"></div>
+                </div>
+                <p class="small text-muted mb-4" id="progreso-descripcion">Esperando información de los dispositivos.</p>
+                <div class="row g-3 progreso-indicadores">
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-desktop text-primary"></i><div class="small text-muted mt-2">Total</div><div class="fs-4 fw-bold" id="progreso-total">0</div></div></div>
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-clock text-primary"></i><div class="small text-muted mt-2">Pendientes</div><div class="fs-4 fw-bold" id="progreso-pendientes">0</div></div></div>
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-spinner text-primary"></i><div class="small text-muted mt-2">En proceso</div><div class="fs-4 fw-bold" id="progreso-en-proceso">0</div></div></div>
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-circle-check text-success"></i><div class="small text-muted mt-2">Completados</div><div class="fs-4 fw-bold text-success" id="progreso-completados">0</div></div></div>
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-circle-xmark text-danger"></i><div class="small text-muted mt-2">Errores</div><div class="fs-4 fw-bold text-danger" id="progreso-errores">0</div></div></div>
+                    <div class="col-6 col-md-4"><div class="m-card h-100 progreso-kpi"><i class="fa-solid fa-hourglass-end text-warning"></i><div class="small text-muted mt-2">Expirados</div><div class="fs-4 fw-bold text-warning" id="progreso-expirados">0</div></div></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
