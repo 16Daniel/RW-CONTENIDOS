@@ -18,10 +18,11 @@
     <link href="~/Content/Admin/css/theme.css" rel="stylesheet" media="all" />
     <link href="~/Content/Admin/css/app.css" rel="stylesheet" media="all" />
     <link href="~/Content/Styles-Mod/SideBar-Gen.css" rel="stylesheet" media="all" />
+    <link href="~/Scripts/DataTables/datatables.min.css" rel="stylesheet" />
     @Styles.Render("~/Content/loader")
 </head>
 
-<body class="app" obtenerDatosCuenta="@Url.Action("ObtenerDatosCuenta","Account")" >
+<body class="app" obtenerDatosCuenta="@Url.Action("ObtenerDatosCuenta","Account")">
     <!-- Carga del loader -->
     @Html.Partial("_Loader")
     <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
@@ -45,6 +46,8 @@
     </div>
     <!-- Para llamadas ajax -->
     @Scripts.Render("~/bundles/jquery")
+    <script src="~/Scripts/DataTables/datatables.min.js"></script>
+
     <script src="~/Scripts/Admin/js/vanilla-utils.js"></script>
     <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="~/Content/Admin/vendor/chartjs/chart.umd.js-4.5.1.min.js"></script>

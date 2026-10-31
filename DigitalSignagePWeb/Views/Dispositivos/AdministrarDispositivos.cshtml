@@ -1,0 +1,327 @@
+﻿
+@{
+    ViewBag.Title = "Administrar Dispositivos";
+}
+
+<link rel="stylesheet" href="~/Content/Styles-Mod/Dispositivos/administrar-dispositivos.css" />
+
+<main class="main-content main-content-admin-dispositivos" id="main-content">
+    <div class="section__content section__content--p30">
+        <div class="container-fluid">
+            <div class="page-header">
+                <div>
+                    <h1>Administración de Dispositivos</h1>
+                    <p class="subtitle">Gestiona los dispositivos registrados y sus credenciales de acceso.</p>
+                </div>
+                <div class="page-header__actions">
+                    <button type="button" class="m-btn m-btn--primary" id="btn-nuevo-dispositivo">
+                        <i class="fa-solid fa-plus"></i> Nuevo dispositivo
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI de detección y clasificación de dispositivos -->
+            <div class="row row-tight">
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head"><p class="stat-card__label">Total registrados</p><span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-desktop"></i></span></div>
+                        <p class="stat-card__value" id="admin-count-total">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head"><p class="stat-card__label">Activos</p><span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-circle-check"></i></span></div>
+                        <p class="stat-card__value text-success" id="admin-count-activos">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head"><p class="stat-card__label">Inactivos</p><span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-circle-xmark"></i></span></div>
+                        <p class="stat-card__value text-danger" id="admin-count-inactivos">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head"><p class="stat-card__label">Sin token</p><span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-key"></i></span></div>
+                        <p class="stat-card__value text-warning" id="admin-count-sin-token">0</p>
+                    </article>
+                </div>
+            </div>
+
+            <!-- Sección: Filtrado de información -->
+            <div class="m-card mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- Buscar dispositivo -->
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label for="admin-search" class="form-label small">Buscar</label>
+                        <input type="text" id="admin-search" class="form-control small" placeholder="Identificador, sucursal o num serie" />
+                    </div>
+                    <!-- Sucursal -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="admin-filter-status" class="form-label small">Región</label>
+                        <select id="admin-filter-status" class="form-select small">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <!-- Estatus administrativo -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="admin-filter-token" class="form-label small">Estatus</label>
+                        <select id="admin-filter-token" class="form-select small">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="col-12 col-xl-2">
+                        <div class="d-flex gap-2">
+                            <button type="button" id="admin-btn-search" class="m-btn m-btn--primary flex-fill justify-content-center" title="Buscar" aria-label="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            <button type="button" id="admin-btn-clear" class="m-btn m-btn--ghost flex-fill justify-content-center" title="Limpiar" aria-label="Limpiar"><i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paginación para mostrar los players -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h2 class="admin-section-title mb-0">Dispositivos registrados</h2>
+                <div class="dispositivos-toolbar-actions">
+                    <span class="admin-result-count" id="admin-result-count">0 resultados</span>
+                    <select id="admin-page-size" class="form-select form-select-sm admin-page-size dispositivos-page-size" aria-label="Resultados por página">
+                        <option value="6">6 por página</option>
+                        <option value="12" selected>12 por página</option>
+                        <option value="24">24 por página</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Sección: Tabla de dispositivos -->
+            <div class="m-card admin-table-card p-0">
+                <div class="table-responsive">
+                    <table id="admin-devices-table" class="table admin-table tables-styles align-middle mb-0 w-100">
+                        <thead>
+                            <tr>
+                                <th class="text-center">IDENTIFICADOR</th>
+                                <th class="text-center">DISPOSITIVO</th>
+                                <th class="text-center">NUM SERIE</th>
+                                <th class="text-center">REGIÓN</th>
+                                <th class="text-center">ALMACENAMIENTO</th>
+                                <th class="text-center">FECHA MODIFICACIÓN</th>
+                                <th class="text-center">ESTATUS</th>
+                                <th class="text-center">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-devices-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección: Paginación de la tabla -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-between align-items-center gap-2 mt-3">
+
+                <span class="admin-page-caption text-center text-sm-start"
+                      id="admin-page-caption">
+                </span>
+
+                <nav class="admin-pagination d-flex flex-nowrap justify-content-center"
+                     id="admin-pages"
+                     aria-label="Paginación de dispositivos">
+                </nav>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- Alta y edición -->
+<div class="modal fade" id="admin-modal-device" tabindex="-1" aria-labelledby="admin-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="admin-modal-title">Nuevo dispositivo</h5>
+                    <small class="text-muted">Información general y asignación de token para autentificación</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs admin-tabs mb-4" id="admin-device-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="admin-general-tab" data-bs-toggle="tab" data-bs-target="#admin-general" type="button" role="tab" aria-controls="admin-general" aria-selected="true">
+                            <i class="fa-solid fa-desktop me-2"></i>Información general
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="admin-security-tab" data-bs-toggle="tab" data-bs-target="#admin-security" type="button" role="tab" aria-controls="admin-security" aria-selected="false">
+                            <i class="fa-solid fa-shield-halved me-2"></i>Seguridad y token
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Panel: Información del player -->
+                    <div class="tab-pane fade show active" id="admin-general" role="tabpanel" aria-labelledby="admin-general-tab">
+                        <form id="admin-device-form" novalidate>
+                            <input type="hidden" id="admin-device-id" />
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="sucursal" class="form-label">Sucursal <span class="text-danger">*</span></label>
+                                    <input id="sucursal" class="form-control" required placeholder="Ej. RW ALAMEDA" />
+                                    <div class="invalid-feedback">
+                                        Ingrese la sucursal.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="numSerie" class="form-label">Num. serie <span class="text-danger">*</span></label>
+                                    <input id="numSerie" class="form-control" required placeholder="Ej. JB3KJ12B321KJB" />
+                                    <div class="invalid-feedback">
+                                        Ingrese el numero de serie.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="region" class="form-label">Estado</label>
+                                    <select id="region" class="form-select">
+                                        <option>Seleccione región</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Seleccione la región.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="capacidadAlmacenamiento" class="form-label">Capacidad almacenamiento</label>
+                                    <input id="capacidadAlmacenamiento" class="form-control" placeholder="Ej. 64" />
+                                    <div class="invalid-feedback">
+                                        Ingrese la capacidad de almacenamiento.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="unidadAlmacenamiento" class="form-label">Unidad alamcenamiento</label>
+                                    <select id="unidadAlmacenamiento" class="form-select">
+                                        <option>Seleccione unidad</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Seleccione la unidad de almacenamiento.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="estatusAdmin" class="form-label">Estatus administrativo</label>
+                                    <select id="estatusAdmin" class="form-select">
+                                        <option>Seleccione estatus</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Seleccione el estatus administrativo.
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Panel: Crecion y asignación del token -->
+                    <div class="tab-pane fade" id="admin-security" role="tabpanel" aria-labelledby="admin-security-tab">
+                        <div class="admin-security-panel">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                <div><h6 class="fw-semibold mb-1">Credencial de autenticación</h6><p class="small text-muted mb-0">El token identifica al dispositivo ante la API central.</p></div>
+                                <span id="admin-token-status" class="admin-pill admin-pill--neutral">Sin asignar</span>
+                            </div>
+                            <div class="admin-token-placeholder mb-3"><i class="fa-solid fa-lock me-2"></i>El token completo no se muestra en esta vista.</div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" disabled title="Pendiente de integración" id="admin-token-generate" class="m-btn m-btn--primary"><i class="fa-solid fa-key"></i> Generar token</button>
+                                <button type="button" disabled title="Pendiente de integración" id="admin-token-revoke" class="m-btn m-btn--ghost"><i class="fa-solid fa-ban"></i> Revocar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="m-btn m-btn--ghost" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="m-btn m-btn--primary" disabled title="Pendiente de integración" id="admin-save-device">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de baja administrativa -->
+<div class="modal fade" id="admin-modal-baja" tabindex="-1" aria-labelledby="admin-modal-baja-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content admin-baja-modal">
+
+
+            <div class="modal-header border-0 p-0">
+                <button type="button" class="btn-close admin-baja-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                </button>
+            </div>
+
+            <div class="modal-body text-center">
+                <h5 class="admin-baja-title" id="admin-modal-baja-title">
+                    Cambiar estado del dispositivo
+                </h5>
+                <p class="admin-baja-description">¿Confirmas la baja administrativa de <strong id="admin-baja-player-id"></strong>?</p>
+
+                <div class="admin-baja-transition">
+                    <div class="admin-baja-state">
+                        <div class="admin-baja-circle admin-baja-circle--active">
+                            <i class="fa-regular fa-circle-check"></i>
+                        </div>
+                        <span class="admin-baja-label admin-baja-label--active">
+                            Activo
+                        </span>
+                    </div>
+
+                    <div class="admin-baja-arrow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+
+                    <div class="admin-baja-state">
+                        <div class="admin-baja-circle admin-baja-circle--inactive">
+                            <i class="fa-solid fa-power-off"></i>
+                        </div>
+                        <span class="admin-baja-label admin-baja-label--inactive">
+                            Inactivo
+                        </span>
+                    </div>
+
+                </div>
+
+                <p class="admin-baja-notice">
+                    El dispositivo pasará a estado <b>inactivo</b> y dejará de enviar información a la plataforma, así como de recibir y ejecutar instrucciones remotas.
+                </p>
+
+                <div class="row g-2 mt-4">
+                    <div class="col-6">
+                        <button type="button" class="m-btn m-btn--ghost w-100" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                    </div>
+
+                    <div class="col-6">
+                        <button type="button" class="m-btn admin-baja-confirm w-100" disabled title="Pendiente de integración">
+                            Desactivar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/Dispositivos/AdministrarDispositivos.js"></script>
+}
+
+
+
+
+
+
+
+
+

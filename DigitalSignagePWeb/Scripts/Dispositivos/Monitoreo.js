@@ -30,6 +30,9 @@ class Monitoreo {
         this.progresoTimer = null;
         this.consultandoProgreso = false;
         this.solicitudFinalizada = false;
+        // Inicializa las variables para refrescar la pantalla en automatico
+        this.refrescoTimer = null;
+        this.consultandoPlayers = false;
     }
 
 
@@ -46,6 +49,10 @@ class Monitoreo {
             await this.cargarRegiones();
             await this.cargarEstatusPlayer();
             await this.cargarPlayers();
+            await this.recuperarComandoPlayerActivo();
+
+            // Iniciar el intervalo para refrescar la informacion cada minuto
+            this.iniciarRefrescoAutomatico();
 
             this.updateCounters();
             this.render();
@@ -62,11 +69,19 @@ class Monitoreo {
     // CONSULTA DE PLAYERS
     // ========================================================
 
-    async cargarPlayers() {
+    async cargarPlayers(automatico = false) {
+        // Evitar consultas simultaneas
+        if (this.consultandoPlayers) {
+            return;
+        }
+
+        this.consultandoPlayers = true;
 
         try {
-
-            Loading();
+            // El indicador de carga se conserva para las operaciones normales, pero no aparece cada minuto durante el refresco automático.
+            if (!automatico) {
+                Loading();
+            }
 
             const response = await $.ajax({
                 url: $('.main-content-monitoreo').attr('ObtenerPlayers'),
@@ -79,24 +94,30 @@ class Monitoreo {
 
                 this.devices = response.Data.map(player => new Players(player));
 
-                this.currentPage = 1;
+                // Esta modificación, cuando se actualice automáticamente, conservará la página que estás visualizando.
+                if (!automatico) {
+                    this.currentPage = 1;
+                }
 
                 this.updateCounters();
                 this.render();
 
             } else {
-
-                Alerts.error(
-                    response.Message || 'No se recibió el detalle del error.',
-                    'Error al cargar dispositivos'
-                );
+                // Evitar alertas repetidas en el refresco automático
+                if (automatico) {
+                    console.error('Error en refresco automático:', response.Message);
+                } else {
+                    Alerts.error(
+                        response.Message || 'No se recibió el detalle del error.',
+                        'Error al cargar dispositivos'
+                    );
+                }
 
             }
 
         } catch (error) {
 
-            console.error('Error al cargar dispositivos:', error);
-
+            
             let mensaje = error.responseJSON?.Message
                 || error.responseJSON?.ExceptionMessage;
 
@@ -111,17 +132,58 @@ class Monitoreo {
 
             }
 
-            Alerts.error(
-                mensaje || error.message || 'No se recibió el detalle del error.',
-                'Error al cargar dispositivos'
-            );
+            // Un problema temporal de red no provocará una alerta emergente cada minuto. Los errores seguirán registrados en la consola y 
+            // el refresco volverá a intentarse en el siguiente ciclo.
+            if (automatico) {
+                console.error('Error en refresco automático:', mensaje || error.message);
+            } else {
+                Alerts.error(
+                    mensaje || error.message || 'No se recibió el detalle del error.',
+                    'Error al cargar dispositivos'
+                );
+            }
 
         } finally {
 
-            StopLoading();
+            this.consultandoPlayers = false;
+
+            if (!automatico) {
+                StopLoading();
+            }
 
         }
 
+
+    }
+
+    /**
+    * Inicia la actualización automática de los dispositivos.
+    *
+    * Consulta la información almacenada en SQL Server sin generar
+    * comandos REPORTAR_INFO ni interferir con su seguimiento.
+    */
+    iniciarRefrescoAutomatico() {
+
+        if (this.refrescoTimer !== null) {
+            clearInterval(this.refrescoTimer);
+        }
+
+        const segundos = Number(
+            $('.main-content-monitoreo').attr('RefreshIntervalSeconds')
+        );
+
+        if (!Number.isFinite(segundos) || segundos <= 0) {
+            console.error('Intervalo de refresco de Monitoreo no válido.');
+            return;
+        }
+
+        this.refrescoTimer = setInterval(() => {
+
+            if (!this.consultandoPlayers && !document.hidden) {
+                this.cargarPlayers(true);
+            }
+
+        }, segundos * 1000);
 
     }
 
@@ -1133,6 +1195,72 @@ class Monitoreo {
             clearInterval(this.progresoTimer);
             this.progresoTimer = null;
         }
+    }
+
+    /**
+    * Recupera la solicitud activa y vigente de un tipo de comando Player.
+    *
+    * Permite continuar el seguimiento de una solicitud después de recargar
+    * la página, sin generar un nuevo comando.
+    *
+    * @returns {Promise<void>}
+    */
+    async recuperarComandoPlayerActivo() {
+
+        try {
+
+            const response = await $.ajax({
+                url: $('.main-content-monitoreo').attr('ObtenerComandoPlayerActivo'),
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    codigo_tipo_comando: 'REPORTAR_INFO'
+                }
+            });
+
+            // Validar el resultado devuelto por el Controller.
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No fue posible recuperar la solicitud activa.');
+            }
+
+            const data = response.Data;
+
+            // Si no existe una solicitud vigente, conservar el estado inicial.
+            if (!data || !data.existe_solicitud) {
+                return;
+            }
+
+            // Restaurar el identificador de la solicitud recuperada.
+            this.comandoActualId = data.id_comando_player;
+            this.solicitudFinalizada = false;
+
+            // Restaurar la información general del modal.
+            $('#progreso-solicitud').text(`Solicitud #${this.comandoActualId}`);
+            $('#progreso-total').text(data.total_players);
+
+            // Consultar inmediatamente el progreso actualizado.
+            await this.consultarProgresoComando();
+
+            // Reanudar el seguimiento automático si continúa activa.
+            if (!this.solicitudFinalizada && this.progresoTimer === null) {
+                this.iniciarConsultaProgreso();
+            }
+
+        } catch (error) {
+
+            console.error('Error al recuperar la solicitud activa:', error);
+
+            Alerts.error(
+                error.responseJSON?.Message ||
+                error.responseJSON?.message ||
+                error.message ||
+                error.responseText ||
+                'No fue posible recuperar la solicitud activa.',
+                'Error al recuperar solicitud'
+            );
+
+        }
+
     }
 }
 

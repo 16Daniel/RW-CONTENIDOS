@@ -9,7 +9,9 @@
       ObtenerEstatusPlayer="@Url.Action("ObtenerEstatusPlayer", "Dispositivos")"
       ObtenerPlayers="@Url.Action("ObtenerPlayers", "Dispositivos")"
       CrearComandoPlayer="@Url.Action("CrearComandoPlayer", "Dispositivos")"
-      ObtenerProgresoComandoPlayer="@Url.Action("ObtenerProgresoComandoPlayer", "Dispositivos")">
+      ObtenerProgresoComandoPlayer="@Url.Action("ObtenerProgresoComandoPlayer", "Dispositivos")"
+      ObtenerComandoPlayerActivo="@Url.Action("ObtenerComandoPlayerActivo", "Dispositivos")"
+      RefreshIntervalSeconds="@System.Configuration.ConfigurationManager.AppSettings["Monitoreo:RefreshIntervalSeconds"]">
     <div class="section__content section__content--p30">
         <div class="container-fluid">
             <div class="page-header">
@@ -30,25 +32,25 @@
             <!-- Sección: Estados de players -->
             <div class="row row-tight">
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
-                    <article class="stat-card monitor-stat">
+                    <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Total dispositivos</p><span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-desktop"></i></span></div>
                         <p class="stat-card__value" id="count-total">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
-                    <article class="stat-card monitor-stat">
+                    <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Conectados</p><span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-circle-check"></i></span></div>
                         <p class="stat-card__value monitor-online" id="count-online">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
-                    <article class="stat-card monitor-stat">
+                    <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Desconectados</p><span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-circle-xmark"></i></span></div>
                         <p class="stat-card__value monitor-offline" id="count-offline">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
-                    <article class="stat-card monitor-stat">
+                    <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Sin reporte</p><span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-circle-question"></i></span></div>
                         <p class="stat-card__value monitor-unknown" id="count-unknown">0</p>
                     </article>

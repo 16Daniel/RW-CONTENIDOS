@@ -26,6 +26,12 @@ namespace DigitalSignagePWeb.Controllers
             return View();
         }
 
+        // GET: Administrar Dispositivos
+        public ActionResult AdministrarDispositivos()
+        {
+            return View();
+        }
+
         #endregion
 
         #region Metodos
@@ -337,7 +343,89 @@ namespace DigitalSignagePWeb.Controllers
         }
 
 
+        /// <summary>
+        /// Obtiene la solicitud activa y vigente de un tipo de comando Player.
+        /// Permite recuperar el seguimiento de una solicitud después de
+        /// recargar la página, sin generar un nuevo comando.
+        /// </summary>
+        /// <param name="codigo_tipo_comando">
+        /// Código del tipo de comando que se desea consultar.
+        /// </param>
+        /// <returns>
+        /// Resultado JSON con el identificador de la solicitud activa,
+        /// la cantidad de Players asociados y un indicador de existencia.
+        /// </returns>
+        [HttpGet]
+        [Authorize]
+        public ActionResult ObtenerComandoPlayerActivo(string codigo_tipo_comando)
+        {
+            try
+            {
+                // Validar el código del tipo de comando.
+                if (string.IsNullOrWhiteSpace(codigo_tipo_comando))
+                {
+                    Response.StatusCode = 400;
 
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "El código del tipo de comando es obligatorio."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                // Preparar los parámetros del procedimiento almacenado.
+                var parametros = new Dictionary<string, string>
+                {
+                    { "codigo_tipo_comando", codigo_tipo_comando }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                // Consultar la solicitud activa sin crear nuevos comandos.
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCObtenerComandoPlayerActivo,
+                    parametros
+                );
+
+                // Propagar los errores devueltos por la capa de datos.
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                // Convertir el resultado SQL a un modelo tipado.
+                List<PlayerComandoActivo> resultados =
+                    JsonConvert.DeserializeObject<List<PlayerComandoActivo>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "La consulta de solicitud activa no devolvió exactamente un registro."
+                    );
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = "Consulta de solicitud activa realizada correctamente.",
+                    Data = resultados[0]
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible consultar la solicitud activa del comando."
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
 
 
         #endregion

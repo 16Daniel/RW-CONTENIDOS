@@ -1,8 +1,5 @@
 ﻿/* Estilos exclusivos del módulo Monitoreo de Dispositivos.
    Los estilos generales provienen de theme.css y app.css. */
-body.app .monitor-stat {
-    min-height: 112px;
-}
 
 body.app .monitor-online {
     color: var(--m-success);

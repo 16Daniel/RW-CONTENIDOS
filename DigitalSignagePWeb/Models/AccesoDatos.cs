@@ -123,6 +123,11 @@ namespace DigitalSignagePWeb.Models
         /// </summary>
         public string GCObtenerProgresoComandoPlayer = "EXEC SpOpMxDS_ObtenerProgresoComandoPlayer @id_comando_player";
 
+        /// <summary>
+        /// Consulta si existe una solicitud de comando Player activa y vigente para un tipo de comando específico.
+        /// </summary>
+        public string GCObtenerComandoPlayerActivo = "EXEC SpOpMxDS_ObtenerComandoPlayerActivo @codigo_tipo_comando";
+
         #endregion
 
         #region SQLFunctions

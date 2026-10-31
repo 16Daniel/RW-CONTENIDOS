@@ -2229,6 +2229,10 @@ section {
   right: 0;
 }
 
+.size-kpi {
+    min-height: 112px;
+}
+
 .header-desktop3 {
   background: #393939;
   display: flex;

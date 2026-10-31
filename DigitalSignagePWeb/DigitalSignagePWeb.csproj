@@ -131,6 +131,7 @@
     <Compile Include="Models\AccesoDatos.cs" />
     <Compile Include="Models\InformacionUsuario.cs" />
     <Compile Include="Models\Player.cs" />
+    <Compile Include="Models\PlayerComandoActivo.cs" />
     <Compile Include="Models\PlayerComandos.cs" />
     <Compile Include="Models\PlayerReporteRequest.cs" />
     <Compile Include="Models\PlayerTokenValidado.cs" />
@@ -217,6 +218,7 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\Styles-Mod\Dispositivos\administrar-dispositivos.css" />
     <Content Include="Content\Styles-Mod\SideBar-Gen.css" />
     <Content Include="Content\Styles-Mod\Monitoreo\monitoreo-dispositivos.css" />
     <Content Include="favicon.ico" />
@@ -311,6 +313,11 @@
     <Content Include="Content\Admin\vendor\fontawesome-7.3.1\webfonts\fa-solid-900.woff2" />
     <Content Include="Content\Admin\vendor\fontawesome-7.3.1\webfonts\fa-v4compatibility.woff2" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
+    <Content Include="Scripts\DataTables\datatables.css" />
+    <Content Include="Scripts\DataTables\datatables.js" />
+    <Content Include="Scripts\DataTables\datatables.min.css" />
+    <Content Include="Scripts\DataTables\datatables.min.js" />
+    <Content Include="Scripts\Dispositivos\AdministrarDispositivos.js" />
     <Content Include="Scripts\Dispositivos\Monitoreo.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -343,6 +350,7 @@
     <Content Include="Views\Shared\_Navbar.cshtml" />
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Dispositivos\Monitoreo.cshtml" />
+    <Content Include="Views\Dispositivos\AdministrarDispositivos.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
