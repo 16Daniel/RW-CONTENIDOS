@@ -13,6 +13,8 @@ namespace DigitalSignagePWeb.Models
         public int id_estado { get; set; }
         public string estado { get; set; }
 
+        public int? id_estatus_admin { get; set; }
+        public string estatus_administracion { get; set; }
         public int? id_estatus_player { get; set; }
         public string estatus_player { get; set; }
 
@@ -33,6 +35,7 @@ namespace DigitalSignagePWeb.Models
 
         public decimal? capacidad_almacenamiento { get; set; }
         public decimal? ultimo_espacio_disponible { get; set; }
+        public int? id_unidad_almacenamiento { get; set; }
         public string unidad_almacenamiento { get; set; }
 
         public DateTime? fecha_creacion { get; set; }

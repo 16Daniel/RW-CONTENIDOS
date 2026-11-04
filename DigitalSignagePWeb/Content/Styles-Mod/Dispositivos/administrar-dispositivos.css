@@ -36,24 +36,24 @@ body.app .dispositivos-page-size {
     font-size: 13px;
 }
 
-    .main-content-admin-dispositivos .admin-table thead th {
-        padding: 16px 15px;
-        color: #91a0ba;
-        font-size: 11px;
-        font-weight: 600;
-        border-bottom: 1px solid #e9edf2;
-        white-space: nowrap;
-    }
+.main-content-admin-dispositivos .admin-table thead th {
+    padding: 16px 15px;
+    color: #91a0ba;
+    font-size: 11px;
+    font-weight: 600;
+    border-bottom: 1px solid #e9edf2;
+    white-space: nowrap;
+}
 
-    .main-content-admin-dispositivos .admin-table tbody td {
-        padding: 14px 15px;
-        border-color: #eef0f3;
-        vertical-align: middle;
-    }
+.main-content-admin-dispositivos .admin-table tbody td {
+    padding: 14px 15px;
+    border-color: #eef0f3;
+    vertical-align: middle;
+}
 
-    .main-content-admin-dispositivos .admin-table tbody tr:last-child td {
-        border-bottom: 0;
-    }
+.main-content-admin-dispositivos .admin-table tbody tr:last-child td {
+    border-bottom: 0;
+}
 
 .admin-device-name {
     font-weight: 600;
@@ -95,6 +95,8 @@ body.app .dispositivos-page-size {
     color: #df4141;
     background: #fff0f0;
 }
+
+
 
 .admin-pill--token {
     color: #1676b8;
@@ -296,6 +298,26 @@ body.app .dispositivos-page-size {
     }
 }
 
+/* Estatus inactivo */
+.admin-player-status--inactive {
+    position: relative;
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #ef4444;
+    border-radius: 50px;
+    padding: 2px 9px;
+}
+
+/* Estatus suspendido */
+.admin-player-status--suspended {
+    position: relative;
+    color: #d97706;
+    background-color: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: 50px;
+    padding: 2px 9px;
+}
+
 
 /* ==========================================
    ANIMACIONES DEL ESTATUS
@@ -352,10 +374,7 @@ body.app .dispositivos-page-size {
     }
 }
 
-/*
-    ESTILOS DE MODALES Y ANIMACIONES
 
-*/
 
 /* ==========================================
    MODAL BAJA - ESTADO DE TRANSICIÓN
@@ -396,6 +415,10 @@ body.app .dispositivos-page-size {
     margin-bottom: 0;
     font-size: 13px;
     color: #64748b;
+}
+
+#admin-modal-identificador {
+    font-size: 12px;
 }
 
 /* Estados */
@@ -536,3 +559,39 @@ body.app .dispositivos-page-size {
         animation: none;
     }
 }
+
+/* Animación de vibración para iconos de acciones */
+@keyframes adminIconVibrate {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+.admin-action:hover i {
+    animation: adminIconVibrate 0.12s linear 3;
+}
+
+
+
+body.app .main-content-admin-dispositivos {
+    min-width: 0;
+    max-width: 100%;
+}
+
+body.app .admin-table-card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+    body.app .admin-table-card .table-responsive {
+        max-width: 100%;
+        overflow-x: auto;
+    }

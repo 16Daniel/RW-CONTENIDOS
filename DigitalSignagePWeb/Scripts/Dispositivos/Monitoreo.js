@@ -117,30 +117,16 @@ class Monitoreo {
 
         } catch (error) {
 
-            
-            let mensaje = error.responseJSON?.Message
-                || error.responseJSON?.ExceptionMessage;
+            console.error('Error al cargar dispositivos:', error);
 
-            if (!mensaje && error.responseText) {
+            // Evitar alertas durante el refresco automático.
+            if (!automatico) {
 
-                const documento = new DOMParser().parseFromString(
-                    error.responseText,
-                    'text/html'
-                );
-
-                mensaje = documento.title || error.responseText;
-
-            }
-
-            // Un problema temporal de red no provocará una alerta emergente cada minuto. Los errores seguirán registrados en la consola y 
-            // el refresco volverá a intentarse en el siguiente ciclo.
-            if (automatico) {
-                console.error('Error en refresco automático:', mensaje || error.message);
-            } else {
                 Alerts.error(
-                    mensaje || error.message || 'No se recibió el detalle del error.',
+                    Alerts.obtenerMensajeError(error),
                     'Error al cargar dispositivos'
                 );
+
             }
 
         } finally {
@@ -231,13 +217,10 @@ class Monitoreo {
 
             console.error('Error al cargar regiones:', error);
 
-            const mensaje = error.responseJSON?.Message
-                || error.responseJSON?.ExceptionMessage
-                || error.responseText
-                || error.message
-                || 'No se recibió el detalle del error.';
-
-            Alerts.error(mensaje, 'Error al cargar regiones');
+            Alerts.error(
+                Alerts.obtenerMensajeError(error),
+                'Error al cargar regiones'
+            );
 
         } finally {
 
@@ -289,13 +272,10 @@ class Monitoreo {
 
             console.error('Error al cargar estatus:', error);
 
-            const mensaje = error.responseJSON?.Message
-                || error.responseJSON?.ExceptionMessage
-                || error.responseText
-                || error.message
-                || 'No se recibió el detalle del error.';
-
-            Alerts.error(mensaje, 'Error al cargar estatus');
+            Alerts.error(
+                Alerts.obtenerMensajeError(error),
+                'Error al cargar estatus'
+            );
 
         } finally {
 
@@ -947,11 +927,8 @@ class Monitoreo {
             console.error('Error al crear la solicitud:', error);
 
             Alerts.error(
-                error.responseJSON?.Message ||
-                error.responseJSON?.message ||
-                error.message ||
-                error.responseText ||
-                'No fue posible crear la solicitud.'
+                Alerts.obtenerMensajeError(error),
+                'Error al crear solicitud'
             );
 
         } finally {
@@ -1038,11 +1015,8 @@ class Monitoreo {
             console.error('Error al consultar el progreso:', error);
 
             Alerts.error(
-                error.responseJSON?.Message ||
-                error.responseJSON?.message ||
-                error.message ||
-                error.responseText ||
-                'No fue posible consultar el progreso.'
+                Alerts.obtenerMensajeError(error),
+                'Error al consultar progreso'
             );
         } finally {
             this.consultandoProgreso = false;
@@ -1251,11 +1225,7 @@ class Monitoreo {
             console.error('Error al recuperar la solicitud activa:', error);
 
             Alerts.error(
-                error.responseJSON?.Message ||
-                error.responseJSON?.message ||
-                error.message ||
-                error.responseText ||
-                'No fue posible recuperar la solicitud activa.',
+                Alerts.obtenerMensajeError(error),
                 'Error al recuperar solicitud'
             );
 

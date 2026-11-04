@@ -45,6 +45,32 @@ namespace DigitalSignagePWeb.Models
 
         #endregion
 
+        #region Administrar dispositivos
+        //SP para consultar players administracion
+        public string GCConsultaPlayersAdministracion { get { return "EXEC SpOpMxDS_ConsultaPlayersAdministracion"; } }
+
+        //SP para consultar estatus administrativos
+        public string GCConsultaEstatusAdministrativo { get { return "EXEC SpOpMxDS_ConsultaEstatusAdministrativo"; } }
+        
+        //SP para consultar player por id
+        public string GCConsultaConsultaInformacionPlayerAdmin { get { return "EXEC SpOpMxDS_ConsultaInformacionPlayerAdmin @id_player"; } }
+
+        //SP para consultar unidad almacenamiento 
+        public string GCConsultaConsultaUnidadAlmacenamiento { get { return "EXEC SpOpMxDS_ConsultaUnidadAlmacenamiento"; } }
+
+        //SP para registrar un nuevo player
+        public string GCInsertaNuevoPlayer { get { return "EXEC SpOpMxDS_InsertarNuevoPlayer @id_sucursal, @numero_serie, @capacidad_almacenamiento, @id_unidad_almacenamiento, @id_estatus_admin"; } }
+
+        //SP modificar la informacion administrativa de un player
+        public string GCActualizarInformacionPlayerAdmin { get { return "EXEC SpOpMxDS_ActualizarInformacionPlayerAdmin @id_player, @id_sucursal, @capacidad_almacenamiento, @id_unidad_almacenamiento"; } }
+
+        //SP para cambiar el estatus adminstrativo de un player
+        public string GCModificarEstatusPlayer { get { return "EXEC SpOpMxDS_ModificarEstatusPlayer @id_player, @id_estatus_admin"; } }
+
+        #endregion
+
+
+
         #region Agent
 
         /// <summary>

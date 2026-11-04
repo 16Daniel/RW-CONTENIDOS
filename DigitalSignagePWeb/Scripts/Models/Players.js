@@ -10,6 +10,9 @@ class Players {
         this.id_estado = data.id_estado;
         this.estado = data.estado;
 
+        this.id_estatus_admin = data.id_estatus_admin;
+        this.estatus_administracion = data.estatus_administracion;
+
         this.id_estatus_player = data.id_estatus_player;
         this.estatus_player = data.estatus_player;
 
@@ -30,6 +33,7 @@ class Players {
 
         this.capacidad_almacenamiento = data.capacidad_almacenamiento;
         this.ultimo_espacio_disponible = data.ultimo_espacio_disponible;
+        this.id_unidad_almacenamiento = data.id_unidad_almacenamiento;
         this.unidad_almacenamiento = data.unidad_almacenamiento;
 
         this.fecha_creacion = data.fecha_creacion;

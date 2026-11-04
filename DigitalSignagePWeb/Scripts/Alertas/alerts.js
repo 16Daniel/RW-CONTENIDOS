@@ -32,6 +32,35 @@ const Alerts = {
     error(message, title = "Error") {
         return Modal.fire({ icon: "error", title, text: message });
     },
+    obtenerMensajeError(error) {
+
+        if (error.responseJSON?.Message || error.responseJSON?.message) {
+            return error.responseJSON.Message || error.responseJSON.message;
+        }
+
+        if (error instanceof Error) {
+            return error.message;
+        }
+
+        if (error.responseText) {
+
+            const respuesta = error.responseText.trim();
+
+            if (respuesta.startsWith('<')) {
+                return `El servidor devolvió HTML en lugar de JSON. HTTP ${error.status}. Verifica la URL del servicio, la sesión y la respuesta del controlador.`;
+            }
+
+            return respuesta.length > 500
+                ? respuesta.substring(0, 500) + '...'
+                : respuesta;
+        }
+
+        if (error.status === 0) {
+            return 'No se pudo establecer conexión con el servidor.';
+        }
+
+        return `Error HTTP ${error.status || 'desconocido'}: ${error.statusText || 'Sin descripción'}.`;
+    },
     warning(message, title = "Aviso") {
         return Modal.fire({ icon: "warning", title, text: message });
     },
@@ -42,6 +71,7 @@ const Alerts = {
         return Modal.fire({icon: "info", title, text: message, timer: 3000, showConfirmButton: false
         });
     },
+
     async confirm(message, title = "¿Estás seguro?") {
         const r = await Modal.fire({
             icon: "question", title, text: message,
@@ -49,4 +79,7 @@ const Alerts = {
         });
         return r.isConfirmed;
     }
+
+
 };
+

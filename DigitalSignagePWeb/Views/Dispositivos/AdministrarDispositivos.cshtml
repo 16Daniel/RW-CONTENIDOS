@@ -5,7 +5,15 @@
 
 <link rel="stylesheet" href="~/Content/Styles-Mod/Dispositivos/administrar-dispositivos.css" />
 
-<main class="main-content main-content-admin-dispositivos" id="main-content">
+<main class="main-content main-content-admin-dispositivos" id="main-content" ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
+      ObtenerEstatusAdmin="@Url.Action("ObtenerEstatusAdmin", "Dispositivos")"
+      ObtenerPlayersAdmin="@Url.Action("ObtenerPlayersAdmin", "Dispositivos")"
+      ObtenerPlayerPorId="@Url.Action("ObtenerPlayerPorId", "Dispositivos")"
+      ObtenerUnidadesAlmacenamiento="@Url.Action("ObtenerUnidadesAlmacenamiento", "Dispositivos")"
+      ObtenerSucursales="@Url.Action("ObtenerSucursales", "Dispositivos")"
+      InsertarNuevoPlayer="@Url.Action("InsertarNuevoPlayer", "Dispositivos")"
+      ActualizarInformacionPlayerAdmin="@Url.Action("ActualizarInformacionPlayerAdmin", "Dispositivos")"
+      ModificarEstatusPlayer="@Url.Action("ModificarEstatusPlayer", "Dispositivos")">
     <div class="section__content section__content--p30">
         <div class="container-fluid">
             <div class="page-header">
@@ -53,20 +61,21 @@
                 <div class="row g-3 align-items-end">
                     <!-- Buscar dispositivo -->
                     <div class="col-12 col-md-6 col-xl-4">
-                        <label for="admin-search" class="form-label small">Buscar</label>
-                        <input type="text" id="admin-search" class="form-control small" placeholder="Identificador, sucursal o num serie" />
+                        <label for="buscar" class="form-label small">Buscar</label>
+                        <input type="text" id="buscar" class="form-control small" placeholder="Identificador, sucursal o num serie" />
                     </div>
+
                     <!-- Sucursal -->
                     <div class="col-12 col-md-6 col-xl-3">
-                        <label for="admin-filter-status" class="form-label small">Región</label>
-                        <select id="admin-filter-status" class="form-select small">
+                        <label for="region" class="form-label small">Región</label>
+                        <select id="region" class="form-select small">
                             <option value="">Todas</option>
                         </select>
                     </div>
                     <!-- Estatus administrativo -->
                     <div class="col-12 col-md-6 col-xl-3">
-                        <label for="admin-filter-token" class="form-label small">Estatus</label>
-                        <select id="admin-filter-token" class="form-select small">
+                        <label for="estatus-admin" class="form-label small">Estatus</label>
+                        <select id="estatus-admin" class="form-select small">
                             <option value="">Todos</option>
                         </select>
                     </div>
@@ -97,7 +106,7 @@
             <hr />
 
             <!-- Sección: Tabla de dispositivos -->
-            <div class="m-card admin-table-card p-0">
+            <div class="m-card admin-table-card p-0">                
                 <div class="table-responsive">
                     <table id="admin-devices-table" class="table admin-table tables-styles align-middle mb-0 w-100">
                         <thead>
@@ -141,8 +150,9 @@
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <div>
+                <div class="d-flex flex-column">
                     <h5 class="modal-title" id="admin-modal-title">Nuevo dispositivo</h5>
+                    <small id="admin-modal-identificador" class="text-muted"></small>
                     <small class="text-muted">Información general y asignación de token para autentificación</small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -169,7 +179,9 @@
                             <div class="row g-3">
                                 <div class="col-12 col-md-6">
                                     <label for="sucursal" class="form-label">Sucursal <span class="text-danger">*</span></label>
-                                    <input id="sucursal" class="form-control" required placeholder="Ej. RW ALAMEDA" />
+                                    <select id="sucursal" class="form-select" required>
+                                        <option>Seleccione la sucursal</option>
+                                    </select>
                                     <div class="invalid-feedback">
                                         Ingrese la sucursal.
                                     </div>
@@ -180,26 +192,17 @@
                                     <div class="invalid-feedback">
                                         Ingrese el numero de serie.
                                     </div>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label for="region" class="form-label">Estado</label>
-                                    <select id="region" class="form-select">
-                                        <option>Seleccione región</option>
-                                    </select>
-                                    <div class="invalid-feedback">
-                                        Seleccione la región.
-                                    </div>
-                                </div>
+                                </div>                               
                                 <div class="col-12 col-md-6">
                                     <label for="capacidadAlmacenamiento" class="form-label">Capacidad almacenamiento</label>
-                                    <input id="capacidadAlmacenamiento" class="form-control" placeholder="Ej. 64" />
+                                    <input id="capacidadAlmacenamiento" class="form-control" required placeholder="Ej. 64" />
                                     <div class="invalid-feedback">
                                         Ingrese la capacidad de almacenamiento.
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <label for="unidadAlmacenamiento" class="form-label">Unidad alamcenamiento</label>
-                                    <select id="unidadAlmacenamiento" class="form-select">
+                                    <label for="unidadAlmacenamiento-modal" class="form-label">Unidad alamcenamiento</label>
+                                    <select id="unidadAlmacenamiento-modal" class="form-select" required>
                                         <option>Seleccione unidad</option>
                                     </select>
                                     <div class="invalid-feedback">
@@ -207,8 +210,8 @@
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <label for="estatusAdmin" class="form-label">Estatus administrativo</label>
-                                    <select id="estatusAdmin" class="form-select">
+                                    <label for="estatusAdmin-modal" class="form-label">Estatus administrativo</label>
+                                    <select id="estatusAdmin-modal" class="form-select" required>
                                         <option>Seleccione estatus</option>
                                     </select>
                                     <div class="invalid-feedback">
@@ -239,7 +242,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="m-btn m-btn--ghost" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="m-btn m-btn--primary" disabled title="Pendiente de integración" id="admin-save-device">
+                <button type="submit" form="admin-device-form" class="m-btn m-btn--primary" id="admin-guardar-player">
                     <i class="fa-solid fa-floppy-disk"></i> Guardar
                 </button>
             </div>
@@ -252,13 +255,10 @@
 <div class="modal fade" id="admin-modal-baja" tabindex="-1" aria-labelledby="admin-modal-baja-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content admin-baja-modal">
-
-
             <div class="modal-header border-0 p-0">
                 <button type="button" class="btn-close admin-baja-close" data-bs-dismiss="modal" aria-label="Cerrar">
                 </button>
             </div>
-
             <div class="modal-body text-center">
                 <h5 class="admin-baja-title" id="admin-modal-baja-title">
                     Cambiar estado del dispositivo
@@ -302,7 +302,7 @@
                     </div>
 
                     <div class="col-6">
-                        <button type="button" class="m-btn admin-baja-confirm w-100" disabled title="Pendiente de integración">
+                        <button type="button" class="m-btn admin-baja-confirm w-100" id="admin-confirmar-baja">
                             Desactivar
                         </button>
                     </div>
@@ -314,6 +314,7 @@
 </div>
 
 @section scripts {
+    <script src="~/Scripts/Models/Players.js"></script>
     <script src="~/Scripts/Dispositivos/AdministrarDispositivos.js"></script>
 }
 
