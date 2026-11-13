@@ -281,6 +281,63 @@ body.app .modal-row span {
     width: 230px;
 }
 
+.monitor-player-identity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.monitor-player-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.monitor-player-code {
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Región con icono */
+.monitor-player-region {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.monitor-player-region i {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.monitor-action {
+    border: 1px solid #e0e5ed;
+    background: white;
+    color: #536176;
+    border-radius: 6px;
+    width: 33px;
+    height: 33px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.monitor-action:hover {
+    background-color: #fff5d9;
+    border-color: #ffcc66;
+    color: #a66a00;
+}
+
 /* Animación de enfoque para tarjetas */
 .card-hover {
     cursor: pointer;
@@ -312,6 +369,33 @@ body.app .modal-row span {
 
     body.app .monitor-toolbar {
         align-items: flex-start;
+    }
+}
+
+
+/* Efecto de enfoque en las filas de la tabla */
+body.app .devices-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+body.app .devices-table tbody td {
+    transition: background-color 0.15s ease;
+}
+
+body.app .devices-table tbody tr:hover > td {
+    background-color: #f8fafc;
+}
+
+/* Indicador amarillo en el borde izquierdo */
+body.app .devices-table tbody tr:hover > td:first-child {
+    box-shadow: inset 3px 0 0 #ffaa00;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.app .devices-table tbody tr,
+    body.app .devices-table tbody td {
+        transition: none;
     }
 }
 
@@ -363,5 +447,30 @@ body.app .modal-row span {
 
     body.app .monitor-pagination, body.app .pages {
         justify-content: center;
+    }
+}
+
+/* Animación de vibración del icono al pasar el cursor */
+body.app .monitor-detail-action:hover i {
+    animation: monitorIconVibrate 0.12s linear 3;
+}
+
+@keyframes monitorIconVibrate {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.app .monitor-detail-action:hover i {
+        animation: none;
     }
 }

@@ -631,64 +631,87 @@ class Monitoreo {
     // VISTA DE TABLA
     // ========================================================
 
+
     renderTable(devices) {
 
         const rows = devices.map(device => `
-            <tr>
+            <tr class="align-middle">
 
-                <td>
-                    <strong>
-                        ${this.escapeHTML(device.sucursal)}
-                    </strong>
+                <td class="text-center">
+                    <div class="d-flex flex-column align-items-center gap-1">
 
-                    <br>
+                        <span class="admin-player-identity">
+                            <span class="monitor-player-icon">
+                                <i class="fa-solid fa-desktop"></i>
+                            </span>
 
-                    <small>
-                        PLYR-${this.escapeHTML(device.id_player)}
-                    </small>
+                            <span class="monitor-player-code">
+                                PLYR-${this.escapeHTML(device.id_player)}
+                            </span>
+                        </span>
+
+                        <span class="text-muted small">
+                            <i class="fa-solid fa-location-dot me-1"></i>
+                            ${this.escapeHTML(device.sucursal || 'Por asignar')}
+                        </span>
+
+                    </div>
                 </td>
 
-                <td>${this.escapeHTML(device.direccion_mac)}</td>
-                <td>${this.escapeHTML(device.estado)}</td>
-                <td>${this.escapeHTML(device.ultimo_contenido_reportado)}</td>
+                <td class="text-center">
+                    ${this.escapeHTML(device.direccion_mac || 'Por asignar') }
+                </td>
 
-                <td>
-                   <span class="status ${this.getEstadoSincronizacion(device.estado_sincronizacion)}">                    
+                <td class="text-center">
+                    <span class="monitor-player-region">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>${this.escapeHTML(device.estado)}</span>
+                    </span>
+                </td>
+
+                <td class="text-center">
+                    ${this.escapeHTML(device.ultimo_contenido_reportado || 'Por asignar')}
+                </td>
+
+                <td class="text-center">
+                    <span class="status ${this.getEstadoSincronizacion(device.estado_sincronizacion)}">
                         ${this.escapeHTML(device.estado_sincronizacion)}
                     </span>
                 </td>
 
-                <td>
+                <td class="text-center">
                     <span class="status ${this.getStatusClass(device.estatus_player)}">
                         ${this.escapeHTML(device.estatus_player)}
                     </span>
                 </td>
 
-                <td>
+                <td class="text-center">
                     <button type="button"
-                            class="m-btn"
-                            data-detail="${this.escapeHTML(device.id_player)}">
-                        Ver detalles
+                            class=" monitor-action monitor-detail-action"
+                            data-detail="${this.escapeHTML(device.id_player)}"
+                            title="Ver detalles">
+                        <i class="fa-solid fa-circle-info"></i>
                     </button>
+                    
                 </td>
 
             </tr>
         `).join('');
 
-        $('#devices').html(`
+            $('#devices').html(`
             <div class="m-card table-wrap">
 
                 <table class="m-table devices-table">
 
                     <thead>
                         <tr>
-                            <th>Dispositivo</th>
-                            <th>MAC</th>
-                            <th>Región</th>
-                            <th>Contenido</th>
-                            <th>Estado</th>
-                            <th>Estatus</th>
-                            <th>Acción</th>
+                            <th class="text-center">Dispositivo</th>
+                            <th class="text-center">MAC</th>
+                            <th class="text-center">Región</th>
+                            <th class="text-center">Contenido</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Estatus</th>
+                            <th class="text-center">Acción</th>
                         </tr>
                     </thead>
 
