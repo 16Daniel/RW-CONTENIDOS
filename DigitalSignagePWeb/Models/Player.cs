@@ -23,6 +23,7 @@ namespace DigitalSignagePWeb.Models
         public string direccion_mac { get; set; }
         public string ip_player { get; set; }
         public string version_agent { get; set; }
+        public string estado_vinculacion { get; set; }
 
         public int? id_estado_sincronizacion { get; set; }
         public string estado_sincronizacion { get; set; }

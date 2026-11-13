@@ -49,6 +49,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -134,10 +135,13 @@
     <Compile Include="Models\PlayerComandoActivo.cs" />
     <Compile Include="Models\PlayerComandos.cs" />
     <Compile Include="Models\PlayerReporteRequest.cs" />
+    <Compile Include="Models\PlayerSolicitudVinculacionRequest.cs" />
+    <Compile Include="Models\PlayerSolicitudVinculacionResultado.cs" />
     <Compile Include="Models\PlayerTokenValidado.cs" />
     <Compile Include="Models\UnidadAlmacenamientoPlayer.cs" />
     <Compile Include="Models\UtilidadesGenerales.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\Security\RsaSignatureService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Admin\css\app.css" />

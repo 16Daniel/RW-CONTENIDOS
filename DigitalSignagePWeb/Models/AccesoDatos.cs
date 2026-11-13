@@ -46,8 +46,11 @@ namespace DigitalSignagePWeb.Models
         #endregion
 
         #region Administrar dispositivos
+        //SP para consultar las cifras de los KPI's
+        public string GCConsultaCifrasKPIPlayersAdmin { get { return "SpOpMxDS_ConsultaCifrasKPIPlayersAdmin"; } }
+
         //SP para consultar players administracion
-        public string GCConsultaPlayersAdministracion { get { return "EXEC SpOpMxDS_ConsultaPlayersAdministracion"; } }
+        public string GCConsultaPlayersAdministracion { get { return "EXEC SpOpMxDS_ConsultaPlayersAdministracion @busqueda, @id_estado, @id_estatus_admin"; } }
 
         //SP para consultar estatus administrativos
         public string GCConsultaEstatusAdministrativo { get { return "EXEC SpOpMxDS_ConsultaEstatusAdministrativo"; } }
@@ -67,11 +70,35 @@ namespace DigitalSignagePWeb.Models
         //SP para cambiar el estatus adminstrativo de un player
         public string GCModificarEstatusPlayer { get { return "EXEC SpOpMxDS_ModificarEstatusPlayer @id_player, @id_estatus_admin"; } }
 
+        //SP Consulta la información de vinculación y seguridad de un Player
+        public string GCConsultarVinculacionPlayerAdmin { get { return "EXEC SpOpMxDS_ConsultarVinculacionPlayerAdmin @numero_serie"; } }
+
+        //SP Autoriza o rechaza una solicitud de vinculación de un Player
+        public string GCResolverSolicitudVinculacionPlayer { get { return "EXEC SpOpMxDS_ResolverSolicitudVinculacionPlayer @id_solicitud_vinculacion, @id_usuario_resolucion, @autorizar, @observaciones"; } }
+
+
         #endregion
 
 
 
         #region Agent
+        /// <summary>
+        /// Registra un nuevo token de autenticación para un Player,
+        /// utilizando su hash SHA-256.
+        /// </summary>
+        public string GCEmitirTokenPlayer
+        {
+            get
+            {
+                return @"DECLARE @TokenHash BINARY(32);
+
+                 SET @TokenHash = CONVERT(BINARY(32), @hash_hex, 2);
+
+                 EXEC SpOpMxDS_EmitirTokenPlayer
+                     @id_player = @id_player,
+                     @token_hash = @TokenHash;";
+            }
+        }
 
         /// <summary>
         /// Consulta el Player asociado a un token vigente.
@@ -126,7 +153,7 @@ namespace DigitalSignagePWeb.Models
         /// <summary>
         /// Registra una solicitud de comando dirigida a todos los Players.
         /// </summary>
-        public string GCCrearComandoPlayer = "EXEC SpOpMxDS_CrearComandoPlayer @codigo_tipo_comando, @minutos_expiracion";
+        public string GCCrearComandoPlayer = "EXEC SpOpMxDS_CrearComandoPlayer @codigo_tipo_comando, @minutos_expiracion, @id_player, @codigo_alcance";
 
         /// <summary>
         /// Consulta los comandos pendientes de un Player específico. Cada Raspberry consultara únicamente los comandos 
@@ -138,6 +165,11 @@ namespace DigitalSignagePWeb.Models
         /// Registra el inicio de ejecución de un comando por un Player.
         /// </summary>
         public string GCIniciarComandoPlayer = "EXEC SpOpMxDS_IniciarComandoPlayer @id_comando_player, @id_player";
+
+        /// <summary>
+        /// Consulta el estatus de un comando
+        /// </summary>
+        public string GCConsultarEstadoComandoPlayer = "EXEC SpOpMxDS_ConsultarEstadoComandoPlayer @id_comando_player, @id_player";
 
         /// <summary>
         /// Registra el resultado de un comando ejecutado por un Player y actualiza el estado general de la solicitud.
@@ -153,6 +185,20 @@ namespace DigitalSignagePWeb.Models
         /// Consulta si existe una solicitud de comando Player activa y vigente para un tipo de comando específico.
         /// </summary>
         public string GCObtenerComandoPlayerActivo = "EXEC SpOpMxDS_ObtenerComandoPlayerActivo @codigo_tipo_comando";
+
+        /// <summary>
+        /// Registra o recupera una solicitud de vinculación
+        /// enviada por DigitalSignage.Agent.
+        /// </summary>
+        public string GCRegistrarSolicitudVinculacion = "EXEC SpOpMxDS_RegistrarSolicitudVinculacionPlayer @numero_serie, @clave_publica;";
+           
+        /// <summary>
+        /// Recuperar estatus de una solicitud de vinculación
+        /// enviada por DigitalSignage.Agent.
+        /// </summary>
+        public string GCConsultarEstadoVinculacionPlayer = "EXEC SpOpMxDS_ConsultarEstadoVinculacionPlayer @numero_serie, @clave_publica;";
+           
+
 
         #endregion
 

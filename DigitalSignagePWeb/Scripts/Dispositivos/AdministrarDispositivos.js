@@ -1,7 +1,26 @@
 ﻿class AdministracionPlayers {
     constructor() {
         this.idPlayer = null;
+        this.numeroSerie = null;
         this.table = null;
+
+        // Control de actualización automática de credenciales.
+        this.tokenPollingTimer = null;
+        this.tokenPollingIntentos = 0;
+        this.tokenPollingMaxIntentos = 40;
+        this.tokenPollingVersion = 0;
+
+        // Control de actualización automática del módulo.
+        this.autoRefreshTimer = null;
+        this.autoRefreshEnCurso = false;
+        this.autoRefreshIntervalo = 30000;
+
+        // Control de concurrencia entre consultas manuales y automáticas.
+        this.playersConsultaVersion = 0;
+        this.playersConsultasManualesActivas = 0;
+
+        this.puedeGestionarCredencial = false;
+        this.estatusToken = null;
     }
 
     /** Inicializa la tabla y los eventos del módulo. */
@@ -15,9 +34,18 @@
         await this.cargarRegiones();
         await this.cargarEstatusAdmin();
 
+        // KPI's
+        // Carga de cifras en KPI's
+        await this.cargarKPIPlayersAdmin();
+
         // TABLA
         // Cargar players
         await this.cargarPlayersAdmin();
+
+        // Iniciar actualización automática de KPI y dispositivos.
+        this.iniciarActualizacionAutomatica();
+
+
     }
 
     /** Inicializa DataTables para mostrar los Players consultados. */
@@ -134,6 +162,49 @@
                     }
                 },
                 {
+                    data: 'estado_vinculacion',
+                    render: function (data, type) {
+
+                        if (type !== 'display') {
+                            return data ?? '';
+                        }
+
+                        const estatus = String(data ?? 'Sin vincular').trim().toLowerCase();
+
+                        let clase = 'admin-binding--neutral';
+                        let icono = 'fa-link-slash';
+                        let texto = 'Sin vincular';
+
+                        if (estatus === 'vinculado') {
+
+                            clase = 'admin-binding--approved';
+                            icono = 'fa-link';
+                            texto = 'Vinculado';
+
+                        } else if (estatus === 'pendiente') {
+
+                            clase = 'admin-binding--pending';
+                            icono = 'fa-clock';
+                            texto = 'Pendiente';
+
+                        } else if (estatus === 'rechazado') {
+
+                            clase = 'admin-binding--rejected';
+                            icono = 'fa-circle-xmark';
+                            texto = 'Rechazado';
+                        }
+
+                        return `
+                            <span class="admin-player-status admin-binding-status ${clase}">
+                                <span class="admin-status-signal">
+                                    <i class="fa-solid ${icono}"></i>
+                                </span>
+                                <span>${texto}</span>
+                            </span>
+                        `;
+                    }
+                },
+                {
                     data: 'estatus_administracion',
                     render: function (data, type) {
 
@@ -199,7 +270,7 @@
                                     <i class="fa-solid fa-ban"></i>
                                 </button>
                             `
-                            : estatus === 2
+                            : (estatus === 2 || estatus === 3)
                                 ? `
                                     <button type="button"
                                             class="admin-action btnEstadoPlayer ms-1"
@@ -530,35 +601,78 @@
     // CONSULTA DE PLAYERS
     // ========================================================
 
-    async cargarPlayersAdmin() {
-
+    async cargarPlayersAdmin(esActualizacionAutomatica = false) {
+        // No iniciar consultas automáticas mientras existan búsquedas manuales.
+        if (esActualizacionAutomatica && this.playersConsultasManualesActivas > 0) {
+            return;
+        }
         try {
 
-            Loading();
+            // Evitar que el refresco automático sobrescriba una búsqueda manual
+            // Cada consulta invalida las respuestas anteriores.
+            const versionConsulta = ++this.playersConsultaVersion;
 
+            // Registrar consultas iniciadas manualmente.
+            if (!esActualizacionAutomatica) {
+                this.playersConsultasManualesActivas++;
+            }
+
+            if (!esActualizacionAutomatica) {
+                Loading();
+            }
             const response = await $.ajax({
                 url: $('.main-content-admin-dispositivos').attr('ObtenerPlayersAdmin'),
                 type: 'GET',
                 dataType: 'JSON',
+                data: { // Envio de parametros para busqueda de players
+                    busqueda: $('#buscar').val().trim(),
+                    id_estado: $('#region').val() || null,
+                    id_estatus_admin: $('#estatus-admin').val() || null
+                },
                 cache: false
             });
 
+            // Descartar respuestas antiguas o automáticas que coincidan
+            // con una búsqueda manual en ejecución.
+            if (
+                versionConsulta !== this.playersConsultaVersion ||
+                (esActualizacionAutomatica && this.playersConsultasManualesActivas > 0)
+            ) {
+                return;
+            }
+
             if (response.Status === 'OK') {
                 // Carga de datos en el datable
-                this.table.clear();
+                // Conservar la página seleccionada durante el refresco automático.
+                const paginaActual = this.table.page();
 
+                this.table.clear();
                 this.table.rows.add(response.Data);
 
-                this.table.draw();
+                if (esActualizacionAutomatica) {
+                    this.table.draw(false);
+                } else {
+                    this.table.draw();
+                }
+
+                // Restaurar la página si sigue existiendo.
+                if (esActualizacionAutomatica && this.table.page() !== paginaActual) {
+                    const totalPaginas = this.table.page.info().pages;
+                    const paginaDestino = Math.min(paginaActual, Math.max(0, totalPaginas - 1));
+
+                    this.table.page(paginaDestino).draw('page');
+                }
 
             } else {
 
-                console.error('Error en refresco automático:', response.Message);
+                console.error('Error al cargar dispositivos:', response.Message);
 
-                Alerts.error(
-                    response.Message || 'No se recibió el detalle del error.',
-                    'Error al cargar dispositivos'
-                );
+                if (!esActualizacionAutomatica) {
+                    Alerts.error(
+                        response.Message || 'No se recibió el detalle del error.',
+                        'Error al cargar dispositivos'
+                    );
+                }
 
             }
 
@@ -566,15 +680,21 @@
 
             console.error('Error al cargar dispositivos:', error);
 
-            Alerts.error(
-                Alerts.obtenerMensajeError(error),
-                'Error al cargar dispositivos'
-            );
+            if (!esActualizacionAutomatica) {
+                Alerts.error(
+                    Alerts.obtenerMensajeError(error),
+                    'Error al cargar dispositivos'
+                );
+            }
 
         } finally {
 
-            StopLoading();
+            if (!esActualizacionAutomatica) {
 
+                this.playersConsultasManualesActivas--;
+
+                StopLoading();
+            }
         }
 
     }
@@ -594,6 +714,7 @@
 
             if (response.Status === 'OK' && response.Data) {
                 const player = response.Data;
+                this.idPlayer = Number(player.id_player);
 
                 $('#admin-device-id').val(player.id_player);
                 $('#sucursal').val(player.id_sucursal ?? '');
@@ -602,6 +723,9 @@
                 $('#capacidadAlmacenamiento').val(player.capacidad_almacenamiento ?? '');
                 $('#unidadAlmacenamiento-modal').val(player.id_unidad_almacenamiento ?? '');
                 $('#estatusAdmin-modal').val(player.id_estatus_admin ?? '');
+
+                // Conservar el número de serie del Player seleccionado.
+                this.numeroSerie = player.numero_serie;
 
                 $('#admin-general-tab').tab('show');
                 $('#admin-modal-device').modal('show');
@@ -619,10 +743,321 @@
         }
     }
 
+    /** Consulta la información de vinculación y seguridad del Player seleccionado. */
+    async consultarVinculacionPlayerAdmin(esConsultaAutomatica = false) {
+
+        try {
+
+            if (!this.numeroSerie) {
+                throw new Error('No se encontró el número de serie del dispositivo.');
+            }
+
+            if (!esConsultaAutomatica) {
+
+                this.puedeGestionarCredencial = false;
+                this.estatusToken = null;
+
+                // Limpiar los datos de la consulta anterior.
+                $('#admin-binding-status').text('Consultando...');
+                $('#admin-binding-request').text('—');
+                $('#admin-binding-date').text('—');
+                $('#admin-binding-fingerprint').text('—');
+                $('#admin-binding-last-contact').text('—');
+                $('#admin-binding-identity').text('—');
+
+                // Restablecer y deshabilitar el panel de credenciales.
+                $('#admin-token-panel').addClass('admin-token-panel--disabled');
+
+                $('#admin-token-status')
+                    .removeClass('admin-pill--active admin-pill--inactive admin-pill--token')
+                    .addClass('admin-pill--neutral')
+                    .text('Sin consultar');
+
+                $('#admin-token-issued, #admin-token-expires').text('—');
+                $('#admin-token-renew').prop('disabled', true);
+
+                $('#admin-binding-actions').addClass('d-none');
+
+                $('#autorizar-autentificacion, #rechazar-autentificacion')
+                    .prop('disabled', true);   
+            }
+            
+
+            const numeroSerie = this.numeroSerie;
+
+            const versionPolling = this.tokenPollingVersion;
+           
+
+            const response = await $.ajax({
+                url: $('.main-content-admin-dispositivos').attr('ConsultarVinculacionPlayerAdmin'),
+                type: 'GET',
+                dataType: 'JSON',
+                data: {
+                    numero_serie: numeroSerie
+                },
+                cache: false
+            });
+
+            if (response.Status !== 'OK' || !response.Data) {
+                throw new Error(response.Message || 'No se recibió información de vinculación.');
+            }
+
+            // Evitar actualizar información de otro Player o de un seguimiento cancelado.
+            if (
+                this.numeroSerie !== numeroSerie ||
+                (
+                    esConsultaAutomatica &&
+                    (
+                        versionPolling !== this.tokenPollingVersion ||
+                        !$('#admin-modal-device').hasClass('show')
+                    )
+                )
+            ) {
+                return;
+            }
+
+            const vinculacion = response.Data;
+
+            this.puedeGestionarCredencial =
+                vinculacion.PuedeGestionarCredencial === true;
+
+            this.estatusToken = vinculacion.EstatusToken;
+
+            // Mostrar acciones únicamente para solicitudes pendientes.
+            const solicitudPendiente =
+                Number(vinculacion.Codigo) === 1 &&
+                Number(vinculacion.IdSolicitudVinculacion) > 0;
+
+            $('#admin-binding-actions').toggleClass('d-none', !solicitudPendiente);
+
+            // Habilitar las acciones existentes únicamente para solicitudes pendientes.
+            $('#autorizar-autentificacion, #rechazar-autentificacion')
+                .prop('disabled', !solicitudPendiente);
+
+            const clasesVinculacion = [
+                'admin-pill--neutral',
+                'admin-binding--pending',
+                'admin-binding--approved',
+                'admin-binding--rejected',
+                'admin-binding--neutral'
+            ];
+
+            const clasesPorEstado = {
+                0: 'admin-binding--neutral',
+                1: 'admin-binding--pending',
+                2: 'admin-binding--approved',
+                3: 'admin-binding--rejected',
+                4: 'admin-binding--neutral'
+            };
+
+            $('#admin-binding-status')
+                .removeClass(clasesVinculacion.join(' '))
+                .addClass(clasesPorEstado[Number(vinculacion.Codigo)] || 'admin-binding--neutral')
+                .text(vinculacion.Estado ?? 'Sin información');
+
+            $('#admin-binding-request').text(vinculacion.IdSolicitudVinculacion ?? 'Sin solicitud');
+            $('#admin-binding-date').text(this.formatearFechaVinculacion(vinculacion.FechaSolicitud));
+            $('#admin-binding-fingerprint').text(vinculacion.HuellaClavePublica ?? '—');
+            $('#admin-binding-last-contact').text(this.formatearFechaVinculacion(vinculacion.FechaUltimaComunicacion));
+            $('#admin-binding-identity').text(vinculacion.IdentidadVigente ? 'Sí' : 'No');
+
+            // ============================================================
+            // CREDENCIAL DE AUTENTICACIÓN
+            // ============================================================
+
+            // Utilizar la autorización calculada directamente en SQL Server.
+            const puedeGestionarCredencial =
+                vinculacion.PuedeGestionarCredencial === true;
+
+            // Habilitar o deshabilitar visualmente el panel completo.
+            $('#admin-token-panel')
+                .toggleClass(
+                    'admin-token-panel--disabled',
+                    !puedeGestionarCredencial
+                );
+
+            // Controlar la disponibilidad de la acción de renovación.
+            const tokenVigente = puedeGestionarCredencial && vinculacion.EstatusToken === 'Vigente';
+
+            $('#admin-token-renew').prop('disabled', !tokenVigente);
+
+            if (puedeGestionarCredencial) {
+
+                const clasesPorEstatusToken = {
+                    'Vigente': 'admin-pill--active',
+                    'Expirado': 'admin-pill--inactive',
+                    'Revocado': 'admin-pill--inactive',
+                    'Sin asignar': 'admin-pill--neutral'
+                };
+
+                // Mostrar el estatus real de la credencial.
+                // Determinar si el Agent todavía no ha generado su credencial.
+                const estatusToken = vinculacion.EstatusToken;
+
+                const esperandoCredencial =  puedeGestionarCredencial &&  estatusToken === 'Sin asignar';
+
+                // Mostrar el estatus real o indicar que esperamos la credencial.
+                $('#admin-token-status')
+                    .removeClass(
+                        'admin-pill--neutral admin-pill--active admin-pill--inactive admin-pill--token admin-pill--waiting'
+                    )
+                    .addClass(
+                        esperandoCredencial
+                            ? 'admin-pill--neutral admin-pill--waiting'
+                            : (clasesPorEstatusToken[estatusToken] || 'admin-pill--neutral')
+                    )
+                    .text(
+                        esperandoCredencial
+                            ? 'Esperando credencial'
+                            : (estatusToken ?? 'Sin información')
+                    );
+
+                // Mostrar las fechas de la credencial.
+                $('#admin-token-issued').text(
+                    this.formatearFechaVinculacion(vinculacion.FechaEmisionToken)
+                );
+
+                $('#admin-token-expires').text(
+                    this.formatearFechaVinculacion(vinculacion.FechaExpiracionToken)
+                );
+
+            } else {
+
+                // El Player no cumple las condiciones para gestionar su credencial.
+                $('#admin-token-status')
+                    .removeClass('admin-pill--active admin-pill--inactive admin-pill--token')
+                    .addClass('admin-pill--neutral')
+                    .text('No disponible');
+
+                $('#admin-token-issued, #admin-token-expires').text('—');
+            }
+
+        } catch (error) {
+
+            console.error('Error al consultar vinculación del Player:', error);
+
+            // Durante el polling, conservar la información visible
+            // y permitir que el mecanismo vuelva a intentar.
+            if (esConsultaAutomatica) {
+                throw error;
+            }
+
+            $('#admin-binding-status').text('Error de consulta');
+
+            $('#admin-token-panel').addClass('admin-token-panel--disabled');
+            $('#admin-token-renew').prop('disabled', true);
+
+            $('#admin-token-status')
+                .removeClass('admin-pill--active admin-pill--inactive admin-pill--token')
+                .addClass('admin-pill--neutral')
+                .text('No disponible');
+
+            $('#admin-token-issued, #admin-token-expires').text('—');
+
+            Alerts.error(
+                Alerts.obtenerMensajeError(error),
+                'Error al consultar vinculación'
+            );
+        }
+    }
+    /**
+     * Convierte una fecha UTC de ASP.NET MVC al horario
+     * de México (America/Mexico_City).
+     *
+     * @param {string} valor Fecha recibida desde el servidor.
+     * @returns {string} Fecha y hora local de México.
+     */
+    formatearFechaVinculacion(valor) {
+        if (!valor) {
+            return '—';
+        }
+
+        let fecha;
+
+        const coincidencia = /\/Date\((-?\d+)(?:[+-]\d{4})?\)\//.exec(valor);
+
+        if (coincidencia) {
+            fecha = new Date(Number(coincidencia[1]));
+        } else if (typeof valor === 'string') {
+            // Las fechas sin zona horaria se interpretan como UTC.
+            fecha = new Date(
+                /(?:Z|[+-]\d{2}:\d{2})$/i.test(valor)
+                    ? valor
+                    : valor.replace(' ', 'T') + 'Z'
+            );
+        } else {
+            fecha = new Date(valor);
+        }
+
+        if (isNaN(fecha.getTime())) {
+            return '—';
+        }
+
+        return fecha.toLocaleString('es-MX', {
+            timeZone: 'America/Mexico_City',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    }
+
 
     // ========================================================
     // FUNCIONALIDAD
     // ========================================================
+
+    /** Consulta y actualiza los indicadores generales (KPI's) de Players. */
+    async cargarKPIPlayersAdmin(esActualizacionAutomatica = false) {
+
+        try {
+
+            const response = await $.ajax({
+                url: $('.main-content-admin-dispositivos').attr('ObtenerCifrasKPIPlayersAdmin'),
+                type: 'GET',
+                dataType: 'JSON',
+                cache: false
+            });
+
+            if (response.Status === 'OK') {
+
+                const kpi = response.Data;
+
+                $('#players-count-total').text(kpi.total_registrados ?? 0);
+                $('#players-count-activos').text(kpi.total_activos ?? 0);
+                $('#players-count-inactivos').text(kpi.total_inactivos ?? 0);
+                $('#players-count-sin-token').text(kpi.total_sin_token ?? 0);
+
+            } else {
+
+                console.error('Error al actualizar los indicadores:', response.Message);
+
+                if (!esActualizacionAutomatica) {
+                    Alerts.error(
+                        response.Message || 'No se recibió el detalle del error.',
+                        'Error al cargar indicadores'
+                    );
+                }
+
+            }
+
+        } catch (error) {
+
+            console.error('Error al cargar indicadores de Players:', error);
+
+            if (!esActualizacionAutomatica) {
+                Alerts.error(
+                    Alerts.obtenerMensajeError(error),
+                    'Error al cargar indicadores'
+                );
+            }
+
+        }
+
+    }
 
     /**
     * Registra un nuevo Player en la plataforma.
@@ -647,6 +1082,10 @@
 
                 Alerts.success(response.Message);
 
+                // Recargar los contadores de los KPI's
+                await this.cargarKPIPlayersAdmin();
+
+                // Recargar la informacion de los players
                 await this.cargarPlayersAdmin();
 
             } else {
@@ -676,9 +1115,9 @@
     }
 
     /**
-   * Actualiza la informacion adminsitrativa de un Player en la plataforma.
-   * @param {playerModelo} playerModelo Información del dispositivo.
-   */
+    * Actualiza la informacion adminsitrativa de un Player en la plataforma.
+    * @param {playerModelo} playerModelo Información del dispositivo.
+    */
     async actualizarInformacionPlayer(playerModelo) {
 
         try {
@@ -698,6 +1137,10 @@
 
                 Alerts.success(response.Message);
 
+                // Recargar los contadores de los KPI's
+                await this.cargarKPIPlayersAdmin();
+
+                // Recargar la informacion de los players
                 await this.cargarPlayersAdmin();
 
             } else {
@@ -742,6 +1185,10 @@
 
                 Alerts.success(response.Message);
 
+                // Recargar los contadores de los KPI's
+                await this.cargarKPIPlayersAdmin();
+
+                // Recargar la informacion de los players
                 await this.cargarPlayersAdmin();
 
             } else {
@@ -767,16 +1214,331 @@
 
     }
 
+    // Se realiza el proceso de autorizacion o rechazo de vinculacion
+    async resolverSolicitudVinculacion(autorizar) {
+        const idSolicitud = Number($('#admin-binding-request').text().replace('#', '').trim());
+
+        if (!Number.isInteger(idSolicitud) || idSolicitud <= 0) {
+            Alerts.error('No se encontró una solicitud válida.');
+            return;
+        }
+
+        const confirmado = await Alerts.confirm(
+            autorizar
+                ? '¿Deseas autorizar la vinculación de este dispositivo con la plataforma?'
+                : '¿Deseas rechazar la solicitud de vinculación de este dispositivo?',
+            autorizar
+                ? 'Autorizar dispositivo'
+                : 'Rechazar solicitud',
+            autorizar
+                ? 'Autorizar'
+                : 'Rechazar'
+        );
+
+        if (!confirmado) {
+            return;
+        }
+
+        const url = $('#main-content').attr('ResolverSolicitudVinculacionPlayer');
+                
+        try {
+            //Loading();
+
+            const response = await $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    id_solicitud_vinculacion: idSolicitud,
+                    autorizar: autorizar,
+                    observaciones: ''
+                }
+            });
+
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No fue posible resolver la solicitud.');
+            }
+
+            // Actualizar el estado de vinculación sin cerrar el modal.
+            await this.consultarVinculacionPlayerAdmin();
+
+            await Alerts.success(
+                response.Message,
+                autorizar ? 'Dispositivo autorizado' : 'Solicitud rechazada'
+            );
+
+            await this.cargarPlayersAdmin();
+
+            // Iniciar el seguimiento únicamente después de autorizar
+            // y cuando el Agent todavía no tenga una credencial asignada.
+            if (
+                autorizar &&
+                $('#admin-token-status').text().trim() === 'Esperando credencial'
+            ) {
+                this.iniciarConsultaAutomaticaToken(this.numeroSerie);
+            }
+
+        } catch (error) {
+            Alerts.error(
+                error.responseJSON?.Message ||
+                error.responseText ||
+                error.message ||
+                'No fue posible resolver la solicitud.'
+            );
+        } //finally {
+        //StopLoading();
+        //}
+    }
+
+    /**
+     * Detiene el seguimiento de la credencial e invalida
+     * cualquier ejecución anterior del polling.
+     */
+    detenerConsultaAutomaticaToken() {
+
+        // Invalidar las ejecuciones anteriores.
+        this.tokenPollingVersion++;
+
+        if (this.tokenPollingTimer !== null) {
+            clearTimeout(this.tokenPollingTimer);
+            this.tokenPollingTimer = null;
+        }
+
+        this.tokenPollingIntentos = 0;
+    }
+
+    /**
+     * Consulta periódicamente la credencial hasta detectar
+     * un token vigente o alcanzar el límite de intentos.
+     *
+     * @param {string} numeroSerie Número de serie del Player.
+     */
+    async iniciarConsultaAutomaticaToken(numeroSerie) {
+
+        this.detenerConsultaAutomaticaToken();
+
+        // Identificador exclusivo de esta ejecución.
+        const version = this.tokenPollingVersion;
+        // Control exclusivo de esta ejecución del polling.
+        let consultaEnCurso = false;
+
+        const consultar = async () => {
+
+            // No continuar si se canceló el seguimiento,
+            // cambió el Player o se cerró el modal.
+            if (
+                version !== this.tokenPollingVersion ||
+                this.numeroSerie !== numeroSerie ||
+                !$('#admin-modal-device').hasClass('show')
+            ) {
+                return;
+            }
+
+            if (consultaEnCurso) {
+                return;
+            }
+
+            if (this.tokenPollingIntentos >= this.tokenPollingMaxIntentos) {
+                this.detenerConsultaAutomaticaToken();
+                return;
+            }
+
+            consultaEnCurso = true;
+            this.tokenPollingIntentos++;
+
+            try {
+
+                await this.consultarVinculacionPlayerAdmin(true);
+
+                // No programar otra consulta si el seguimiento fue cancelado.
+                if (
+                    version !== this.tokenPollingVersion ||
+                    this.numeroSerie !== numeroSerie ||
+                    !$('#admin-modal-device').hasClass('show')
+                ) {
+                    return;
+                }
+
+                // Detener cuando el token esté vigente.
+                if ($('#admin-token-status').text().trim() === 'Vigente') {
+                    this.detenerConsultaAutomaticaToken();
+                    return;
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Error durante la consulta automática del token:',
+                    error
+                );
+
+            } finally {
+
+                consultaEnCurso = false;
+            }
+
+            // Programar únicamente si esta ejecución sigue activa.
+            if (
+                version === this.tokenPollingVersion &&
+                this.numeroSerie === numeroSerie &&
+                $('#admin-modal-device').hasClass('show')
+            ) {
+                this.tokenPollingTimer = setTimeout(consultar, 3000);
+            }
+        };
+
+        await consultar();
+    }
+
+    /**
+     * Actualiza periódicamente los KPI y la tabla de Players
+     * sin interrumpir la interacción del usuario.
+     */
+    iniciarActualizacionAutomatica() {
+
+        // Evitar temporizadores duplicados.
+        if (this.autoRefreshTimer !== null) {
+            clearTimeout(this.autoRefreshTimer);
+            this.autoRefreshTimer = null;
+        }
+
+        const actualizar = async () => {
+
+            // No realizar consultas mientras la pestaña esté oculta.
+            if (document.hidden) {
+                this.autoRefreshTimer = setTimeout(
+                    actualizar,
+                    this.autoRefreshIntervalo
+                );
+                return;
+            }
+
+            // Evitar consultas simultáneas.
+            if (this.autoRefreshEnCurso) {
+                this.autoRefreshTimer = setTimeout(
+                    actualizar,
+                    this.autoRefreshIntervalo
+                );
+                return;
+            }
+
+            this.autoRefreshEnCurso = true;
+
+            try {
+
+                // Actualizar indicadores sin mostrar alertas.
+                await this.cargarKPIPlayersAdmin(true);
+
+                // No interferir con búsquedas manuales en ejecución.
+                if (this.playersConsultasManualesActivas === 0) {
+
+                    // Actualizar tabla sin mostrar Loading.
+                    await this.cargarPlayersAdmin(true);
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Error durante la actualización automática de Players:',
+                    error
+                );
+
+            } finally {
+
+                this.autoRefreshEnCurso = false;
+
+                // Programar el siguiente ciclo.
+                this.autoRefreshTimer = setTimeout(
+                    actualizar,
+                    this.autoRefreshIntervalo
+                );
+
+            }
+        };
+
+        // Primera actualización después de 30 segundos.
+        this.autoRefreshTimer = setTimeout(
+            actualizar,
+            this.autoRefreshIntervalo
+        );
+    }
+
+    /**
+     * Solicita la renovación de la credencial de un Player.
+     */
+    async renovarTokenPlayer() {
+        const $btn = $('#admin-token-renew');
+        const idPlayer = Number(this.idPlayer);
+
+        try {
+
+            if (!Number.isSafeInteger(idPlayer) || idPlayer <= 0) {
+                throw new Error('No se ha seleccionado un Player válido.');
+            }
+
+            const puedeRenovar =
+                this.puedeGestionarCredencial === true &&
+                this.estatusToken === 'Vigente';
+
+            if (!puedeRenovar) {
+                throw new Error(
+                    'No es posible renovar el token porque el dispositivo no tiene una identidad autorizada y una credencial vigente.'
+                );
+            }
+          
+            $btn.prop('disabled', true);
+
+            const response = await $.ajax({
+                url: $('.main-content-admin-dispositivos').attr('CrearComandoPlayer'),
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    codigo_tipo_comando: 'RENOVAR_TOKEN',
+                    codigo_alcance: 'INDIVIDUAL',
+                    id_player: idPlayer
+                }
+            });
+
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No fue posible solicitar la renovación.');
+            }
+
+            Alerts.success(
+                response.Message || 'Solicitud de renovación registrada.',
+                'Renovación solicitada'
+            );
+
+        } catch (error) {
+
+            console.error('Error al solicitar renovación de token:', error);
+
+            Alerts.error(
+                Alerts.obtenerMensajeError(error),
+                'Error al renovar token'
+            );
+
+        } finally {
+
+            if (this.idPlayer === idPlayer) {
+                await this.consultarVinculacionPlayerAdmin();
+            }
+        }
+    }
+
+    //=================================================================================
+    // EVENTOS
+    //=================================================================================
     /** Vincula los botones existentes de la vista. se implemententan los eventos */
     bindEvents() {
-
-        //Botones para abrir los modales
+        //=================================================================================
+        // MODALES
+        //=================================================================================
+        // Botones para abrir los modales
         $(document).on('click', '#btn-nuevo-dispositivo', () => this.abrirModalNuevo());
 
         $(document).on('click', '.btnEditarPlayer', (event) => {
 
             const boton = $(event.currentTarget);
-            boton.tooltip('hide');
+
             this.abrirModalEditar(boton.data('id'));
 
         });
@@ -784,12 +1546,39 @@
         $(document).on('click', '.btnEstadoPlayer', (event) => {
 
             const boton = $(event.currentTarget);
-            boton.tooltip('hide');
 
             this.abrirModalEstado(boton.data('id'), boton.data('estatus'));
 
         });
-       
+
+        // Consultar vinculación al abrir la pestaña de seguridad.
+        $(document).on('shown.bs.tab', '#admin-security-tab', async () => {
+
+            if (this.idPlayer && this.numeroSerie) {
+                await this.consultarVinculacionPlayerAdmin();
+            }
+
+        });
+
+        $(document).on('shown.bs.tab', '#admin-security-tab', function () {
+            $('#admin-guardar-player').addClass('d-none');
+        });
+
+        $(document).on('shown.bs.tab', '#admin-general-tab', function () {
+            $('#admin-guardar-player').removeClass('d-none');
+        });
+
+        $(document).on('click', '#autorizar-autentificacion', function () {
+            AdministracionPlayersCs.resolverSolicitudVinculacion(true);
+        });
+
+        $(document).on('click', '#rechazar-autentificacion', function () {
+            AdministracionPlayersCs.resolverSolicitudVinculacion(false);
+        });
+
+        //=================================================================================
+        // VALIDACIONES
+        //=================================================================================
         // Validaciones para completar campos
         $(document).on('submit', '#admin-device-form', async function (event) {
 
@@ -856,14 +1645,38 @@
 
         });
 
-        $('#admin-btn-search').on('click', () => this.buscar());
-        $('#admin-search').on('keydown', (event) => {
-            if (event.key === 'Enter') this.buscar();
+        //=================================================================================
+        // FILTROS
+        //=================================================================================
+        // Buscar Players aplicando los filtros en SQL Server.
+        $('#admin-btn-search').on('click', async () => {
+            await this.cargarPlayersAdmin();
         });
-        $('#admin-btn-clear').on('click', () => {
-            $('#admin-search, #admin-filter-status, #admin-filter-token').val('');
-            this.table.search('').columns().search('').draw();
+
+        // Buscar al presionar Enter desde cualquiera de los filtros.
+        $('#buscar, #region, #estatus-admin').on('keydown', async (event) => {
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                await this.cargarPlayersAdmin();
+            }
+
         });
+
+        // Limpiar filtros y consultar todos los Players.
+        $('#admin-btn-clear').on('click', async () => {
+
+            $('#buscar').val('');
+            $('#region').val('');
+            $('#estatus-admin').val('');
+
+            await this.cargarPlayersAdmin();
+        });
+
+        //=================================================================================
+        // DATATABLES
+        //=================================================================================
+        // Evento de botones del datable
         $('#admin-pages').on('click', '[data-page]', (event) => {
             const $button = $(event.currentTarget);
             if ($button.prop('disabled')) return;
@@ -872,6 +1685,24 @@
 
         $('#admin-page-size').on('change', (event) => {
             this.table.page.len(Number($(event.currentTarget).val())).draw();
+        });
+
+        //=================================================================================
+        // FUNCIONALIDADES
+        //=================================================================================
+        // Detener las consultas automáticas al cerrar el modal.
+        $(document).on('hidden.bs.modal', '#admin-modal-device', () => {
+            this.detenerConsultaAutomaticaToken();
+        });
+
+        $(document).on('click', '#admin-token-renew', async (event) => {
+            event.preventDefault();
+
+            if ($(event.currentTarget).prop('disabled')) {
+                return;
+            }
+
+            await this.renovarTokenPlayer();
         });
     }
 
@@ -947,6 +1778,7 @@
         try {
             Loading();
             this.idPlayer = null;
+            this.numeroSerie = null;
 
             $('#admin-device-form')[0].reset();
             $('#admin-device-form').removeClass('was-validated');
@@ -955,6 +1787,11 @@
             $('#admin-device-id').val('');
             $('#admin-modal-title').text('Nuevo dispositivo');
             $('#admin-modal-identificador').text('');
+
+
+            $('#admin-security-tab-item').addClass('d-none');
+            $('#admin-modal-description').text('Información general del dispositivo.');
+
             $('#numSerie').prop('disabled', false);
             $('#estatusAdmin-modal').prop('disabled', false);
 
@@ -981,6 +1818,9 @@
         try {
             Loading();
             this.idPlayer = idPlayer;
+            this.numeroSerie = null;
+            this.puedeGestionarCredencial = false;
+            this.estatusToken = null;
 
             $('#admin-device-form')[0].reset();
             $('#admin-device-form').removeClass('was-validated');
@@ -988,9 +1828,14 @@
 
             $('#admin-modal-title').text('Editar dispositivo');
             $('#admin-modal-identificador').text('ID: PLYR ' + idPlayer);
+
+
+            $('#admin-security-tab-item').removeClass('d-none');
+            $('#admin-modal-description').text('Información general, vinculación y seguridad del dispositivo.');
+
             $('#numSerie').prop('disabled', true);
             $('#estatusAdmin-modal').prop('disabled', true);
-            
+
             // Carga de catalogos para la actualización de información de players
             await this.cargarSucursalesModal();
             await this.cargarRegionesModal();
@@ -1076,7 +1921,7 @@
 
     }
 
-    
+
 }
 
 const AdministracionPlayersCs = new AdministracionPlayers();

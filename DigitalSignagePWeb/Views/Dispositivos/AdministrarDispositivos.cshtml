@@ -5,7 +5,8 @@
 
 <link rel="stylesheet" href="~/Content/Styles-Mod/Dispositivos/administrar-dispositivos.css" />
 
-<main class="main-content main-content-admin-dispositivos" id="main-content" ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
+<main class="main-content main-content-admin-dispositivos" id="main-content"
+      ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
       ObtenerEstatusAdmin="@Url.Action("ObtenerEstatusAdmin", "Dispositivos")"
       ObtenerPlayersAdmin="@Url.Action("ObtenerPlayersAdmin", "Dispositivos")"
       ObtenerPlayerPorId="@Url.Action("ObtenerPlayerPorId", "Dispositivos")"
@@ -13,7 +14,11 @@
       ObtenerSucursales="@Url.Action("ObtenerSucursales", "Dispositivos")"
       InsertarNuevoPlayer="@Url.Action("InsertarNuevoPlayer", "Dispositivos")"
       ActualizarInformacionPlayerAdmin="@Url.Action("ActualizarInformacionPlayerAdmin", "Dispositivos")"
-      ModificarEstatusPlayer="@Url.Action("ModificarEstatusPlayer", "Dispositivos")">
+      ModificarEstatusPlayer="@Url.Action("ModificarEstatusPlayer", "Dispositivos")"
+      ObtenerCifrasKPIPlayersAdmin="@Url.Action("ObtenerCifrasKPIPlayersAdmin","Dispositivos")"
+      ConsultarVinculacionPlayerAdmin="@Url.Action("ConsultarVinculacionPlayerAdmin", "Dispositivos")"
+      ResolverSolicitudVinculacionPlayer="@Url.Action("ResolverSolicitudVinculacionPlayer", "Dispositivos")"
+      CrearComandoPlayer="@Url.Action("CrearComandoPlayer", "Dispositivos")">
     <div class="section__content section__content--p30">
         <div class="container-fluid">
             <div class="page-header">
@@ -33,25 +38,25 @@
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
                     <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Total registrados</p><span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-desktop"></i></span></div>
-                        <p class="stat-card__value" id="admin-count-total">0</p>
+                        <p class="stat-card__value" id="players-count-total">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
                     <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Activos</p><span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-circle-check"></i></span></div>
-                        <p class="stat-card__value text-success" id="admin-count-activos">0</p>
+                        <p class="stat-card__value text-success" id="players-count-activos">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
                     <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Inactivos</p><span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-circle-xmark"></i></span></div>
-                        <p class="stat-card__value text-danger" id="admin-count-inactivos">0</p>
+                        <p class="stat-card__value text-danger" id="players-count-inactivos">0</p>
                     </article>
                 </div>
                 <div class="col-12 col-md-6 col-xl-3 mb-3">
                     <article class="stat-card size-kpi">
                         <div class="stat-card__head"><p class="stat-card__label">Sin token</p><span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-key"></i></span></div>
-                        <p class="stat-card__value text-warning" id="admin-count-sin-token">0</p>
+                        <p class="stat-card__value text-warning" id="players-count-sin-token">0</p>
                     </article>
                 </div>
             </div>
@@ -106,7 +111,7 @@
             <hr />
 
             <!-- Sección: Tabla de dispositivos -->
-            <div class="m-card admin-table-card p-0">                
+            <div class="m-card admin-table-card p-0">
                 <div class="table-responsive">
                     <table id="admin-devices-table" class="table admin-table tables-styles align-middle mb-0 w-100">
                         <thead>
@@ -117,6 +122,7 @@
                                 <th class="text-center">REGIÓN</th>
                                 <th class="text-center">ALMACENAMIENTO</th>
                                 <th class="text-center">FECHA MODIFICACIÓN</th>
+                                <th class="text-center">VINCULACIÓN</th>
                                 <th class="text-center">ESTATUS</th>
                                 <th class="text-center">ACCIONES</th>
                             </tr>
@@ -153,7 +159,7 @@
                 <div class="d-flex flex-column">
                     <h5 class="modal-title" id="admin-modal-title">Nuevo dispositivo</h5>
                     <small id="admin-modal-identificador" class="text-muted"></small>
-                    <small class="text-muted">Información general y asignación de token para autentificación</small>
+                    <small class="text-muted" id="admin-modal-description"></small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
@@ -164,9 +170,9 @@
                             <i class="fa-solid fa-desktop me-2"></i>Información general
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
+                    <li class="nav-item" id="admin-security-tab-item" role="presentation">
                         <button class="nav-link" id="admin-security-tab" data-bs-toggle="tab" data-bs-target="#admin-security" type="button" role="tab" aria-controls="admin-security" aria-selected="false">
-                            <i class="fa-solid fa-shield-halved me-2"></i>Seguridad y token
+                            <i class="fa-solid fa-shield-halved me-2"></i>Vinculación y seguridad
                         </button>
                     </li>
                 </ul>
@@ -192,7 +198,7 @@
                                     <div class="invalid-feedback">
                                         Ingrese el numero de serie.
                                     </div>
-                                </div>                               
+                                </div>
                                 <div class="col-12 col-md-6">
                                     <label for="capacidadAlmacenamiento" class="form-label">Capacidad almacenamiento</label>
                                     <input id="capacidadAlmacenamiento" class="form-control" required placeholder="Ej. 64" />
@@ -225,16 +231,142 @@
 
                     <!-- Panel: Crecion y asignación del token -->
                     <div class="tab-pane fade" id="admin-security" role="tabpanel" aria-labelledby="admin-security-tab">
-                        <div class="admin-security-panel">
+
+                        <!-- Estado de vinculación del dispositivo -->
+                        <div class="admin-security-panel mb-3">
+                            <!-- Encabezado -->
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="admin-security-heading-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Vinculación del dispositivo</h6>
+                                        <p class="text-muted small mb-0">
+                                            Estado de autorización de la identidad del Agent.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <span id="admin-binding-status" class="admin-binding-status">
+                                    —
+                                </span>
+                            </div>
+
+                            <!-- Información de vinculación -->
+                            <div class="row g-3 mb-3">
+
+                                <div class="col-12 col-md-6">
+                                    <div class="text-muted small mb-1">Solicitud</div>
+                                    <div id="admin-binding-request">—</div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="text-muted small mb-1">Fecha de solicitud</div>
+                                    <div id="admin-binding-date">—</div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="bg-light rounded-3 p-3">
+                                        <div class="text-muted small mb-2">
+                                            <i class="fa-solid fa-fingerprint me-1"></i>
+                                            Huella de clave pública (SHA-256)
+                                        </div>
+                                        <div id="admin-binding-fingerprint"
+                                             class="font-monospace small text-break">
+                                            —
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="text-muted small mb-1">Última comunicación</div>
+                                    <div id="admin-binding-last-contact">—</div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="text-muted small mb-1">Identidad vigente</div>
+                                    <div id="admin-binding-identity">—</div>
+                                </div>
+
+                            </div>
+
+                            <!-- Acciones administrativas -->
+                            <div id="admin-binding-actions"
+                                 class="d-none rounded-3 border p-3 admin-binding-notice">
+
+                                <div class="d-flex align-items-start gap-2 mb-3">
+                                    <i class="fa-solid fa-shield-halved mt-1" style="color: #b77900;"></i>
+                                    <div>
+                                        <div class="fw-semibold small mb-1">
+                                            Solicitud pendiente de autorización
+                                        </div>
+                                        <p class="text-muted small mb-0">
+                                            Verifica la identidad del dispositivo antes de
+                                            permitir su vinculación.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end flex-wrap gap-2">
+                                    <button type="button" id="rechazar-autentificacion" class="m-btn m-btn--outline">
+                                        <i class="fa-solid fa-xmark me-1"></i>
+                                        Rechazar
+                                    </button>
+                                    <button type="button" id="autorizar-autentificacion" class="m-btn m-btn--primary">
+                                        <i class="fa-solid fa-check me-1"></i>
+                                        Autorizar dispositivo
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Credencial de autenticación del dispositivo -->
+                        <div class="admin-security-panel admin-credential-panel" id="admin-credential-panel">
                             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-                                <div><h6 class="fw-semibold mb-1">Credencial de autenticación</h6><p class="small text-muted mb-0">El token identifica al dispositivo ante la API central.</p></div>
-                                <span id="admin-token-status" class="admin-pill admin-pill--neutral">Sin asignar</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="admin-credential-heading-icon"><i class="fa-solid fa-key"></i></span>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Credencial de autenticación</h6>
+                                        <p class="small text-muted mb-0">Gestión segura del acceso del dispositivo a la API central.</p>
+                                    </div>
+                                </div>
+                                <span id="admin-token-status" class="admin-pill admin-pill--neutral">Sin consultar</span>
                             </div>
-                            <div class="admin-token-placeholder mb-3"><i class="fa-solid fa-lock me-2"></i>El token completo no se muestra en esta vista.</div>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" disabled title="Pendiente de integración" id="admin-token-generate" class="m-btn m-btn--primary"><i class="fa-solid fa-key"></i> Generar token</button>
-                                <button type="button" disabled title="Pendiente de integración" id="admin-token-revoke" class="m-btn m-btn--ghost"><i class="fa-solid fa-ban"></i> Revocar</button>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-12 col-md-4">
+                                    <div class="admin-credential-info">
+                                        <i class="fa-regular fa-calendar"></i>
+                                        <div><span>Fecha de emisión</span><strong id="admin-token-issued">—</strong></div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="admin-credential-info">
+                                        <i class="fa-regular fa-calendar-check"></i>
+                                        <div><span>Fecha de expiración</span><strong id="admin-token-expires">—</strong></div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <div class="admin-credential-info">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                        <div><span>Autenticación</span><strong>RSA + Bearer</strong></div>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div class="row g-2">
+                                <div class="col-12 col-md-12">
+                                    <button type="button" id="admin-token-renew"
+                                            class="admin-credential-action admin-credential-action--renew"
+                                            title="Solicitar renovación de credencial"
+                                            disabled>
+                                        <span class="admin-credential-action-icon"><i class="fa-solid fa-arrows-rotate"></i></span>
+                                        <span class="admin-credential-action-copy"><strong>Renovar token</strong><small>Solicitar una nueva credencial segura.</small></span>
+                                    </button>
+                                </div>
+                               
+                            </div>
+                           
                         </div>
                     </div>
 
@@ -249,7 +381,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Modal de baja administrativa -->
 <div class="modal fade" id="admin-modal-baja" tabindex="-1" aria-labelledby="admin-modal-baja-title" aria-hidden="true">

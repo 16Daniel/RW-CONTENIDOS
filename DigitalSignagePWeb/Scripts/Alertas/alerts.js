@@ -72,11 +72,23 @@ const Alerts = {
         });
     },
 
-    async confirm(message, title = "¿Estás seguro?") {
+    async confirm(message, title = "¿Estás seguro?", confirmText = "Confirmar") {
         const r = await Modal.fire({
-            icon: "question", title, text: message,
-            showCancelButton: true, confirmButtonText: "Sí", cancelButtonText: "Cancelar"
+            icon: "question",
+            title,
+            text: message,
+            showCancelButton: true,
+            confirmButtonText: confirmText,
+            cancelButtonText: "Cancelar",
+
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: "m-btn m-btn--primary",
+                cancelButton: "m-btn m-btn--outline",
+                actions: "gap-2"
+            }
         });
+
         return r.isConfirmed;
     }
 

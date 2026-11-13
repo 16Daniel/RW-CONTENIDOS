@@ -891,7 +891,11 @@ class Monitoreo {
             const response = await $.ajax({
                 url: $('.main-content-monitoreo').attr('CrearComandoPlayer'),
                 type: 'POST',
-                dataType: 'json'
+                dataType: 'json',
+                data: {
+                    codigo_tipo_comando: 'REPORTAR_INFO',
+                    codigo_alcance: 'GLOBAL'
+                }
             });
 
             if (response.Status !== 'OK') {

@@ -1,5 +1,16 @@
 ﻿/* Estilos exclusivos de Administración de Dispositivos.
    Reutiliza las clases existentes de CoolAdmin, theme.css y app.css. */
+/* Animación de enfoque para tarjetas */
+.stat-card {
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
 .main-content-admin-dispositivos .admin-section-title {
     font-size: 20px;
     font-weight: 600;
@@ -12,6 +23,10 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
+}
+/* Desactivar el indicador animado únicamente en la tabla */
+.admin-table .admin-binding--pending::before {
+    display: none;
 }
 
 .main-content-admin-dispositivos .admin-result-count,
@@ -77,14 +92,14 @@ body.app .dispositivos-page-size {
     white-space: nowrap;
 }
 
-    .admin-pill::before {
-        content: '';
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: currentColor;
-        opacity: .55;
-    }
+.admin-pill::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: .55;
+}
 
 .admin-pill--active {
     color: #078f71;
@@ -95,8 +110,6 @@ body.app .dispositivos-page-size {
     color: #df4141;
     background: #fff0f0;
 }
-
-
 
 .admin-pill--token {
     color: #1676b8;
@@ -123,6 +136,7 @@ body.app .dispositivos-page-size {
     .admin-action:hover {
         border-color: #f5a900;
         color: #c38a00;
+        box-shadow: 0px 0px 6px 1px rgb(0 0 0 / 20%);
     }
 
 .admin-tabs .nav-link {
@@ -166,34 +180,34 @@ body.app .dispositivos-page-size {
     flex-wrap: wrap;
 }
 
-.main-content-admin-dispositivos #admin-pages button {
-    min-width: 31px;
-    height: 31px;
-    padding: 0 9px;
-    border: 1px solid #e7ebf1;
-    border-radius: 6px;
-    background: #fff;
-    color: #64728a;
-    font-size: 13px;
-    cursor: pointer;
-}
+    .main-content-admin-dispositivos #admin-pages button {
+        min-width: 31px;
+        height: 31px;
+        padding: 0 9px;
+        border: 1px solid #e7ebf1;
+        border-radius: 6px;
+        background: #fff;
+        color: #64728a;
+        font-size: 13px;
+        cursor: pointer;
+    }
 
-.main-content-admin-dispositivos #admin-pages button.active {
-    background: #ffaa00;
-    border-color: #ffaa00;
-    color: #fff;
-    font-weight: 600;
-}
+        .main-content-admin-dispositivos #admin-pages button.active {
+            background: #ffaa00;
+            border-color: #ffaa00;
+            color: #fff;
+            font-weight: 600;
+        }
 
-.main-content-admin-dispositivos #admin-pages button:disabled {
-    opacity: .35;
-    cursor: default;
-}
+        .main-content-admin-dispositivos #admin-pages button:disabled {
+            opacity: .35;
+            cursor: default;
+        }
 
-.main-content-admin-dispositivos #admin-pages button:not(:disabled):not(.active):hover {
-    border-color: #ffaa00;
-    color: #c38a00;
-}
+        .main-content-admin-dispositivos #admin-pages button:not(:disabled):not(.active):hover {
+            border-color: #ffaa00;
+            color: #c38a00;
+        }
 
 
 
@@ -206,9 +220,9 @@ body.app .dispositivos-page-size {
     transition: background-color 0.15s ease;
 }
 
-.admin-table tbody tr:hover > td {
-    background-color: #f8fafc;
-}
+    .admin-table tbody tr:hover > td {
+        background-color: #f8fafc;
+    }
 
 /* Identificador del dispositivo */
 .admin-player-identity {
@@ -245,10 +259,10 @@ body.app .dispositivos-page-size {
     white-space: nowrap;
 }
 
-.admin-player-region i {
-    color: #94a3b8;
-    font-size: 12px;
-}
+    .admin-player-region i {
+        color: #94a3b8;
+        font-size: 12px;
+    }
 
 /* Estatus sin fondo, con icono y texto */
 .admin-player-status {
@@ -278,17 +292,17 @@ body.app .dispositivos-page-size {
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.admin-table .btnEditarPlayer:hover {
-    background-color: #fff5d9;
-    border-color: #ffcc66;
-    color: #a66a00;
-}
+    .admin-table .btnEditarPlayer:hover {
+        background-color: #fff5d9;
+        border-color: #ffcc66;
+        color: #a66a00;
+    }
 
-.admin-table .btnEstadoPlayer:hover {
-    background-color: #fff0f0;
-    border-color: #f5b8be;
-    color: #cf3545;
-}
+    .admin-table .btnEstadoPlayer:hover {
+        background-color: #fff0f0;
+        border-color: #f5b8be;
+        color: #cf3545;
+    }
 
 @media (prefers-reduced-motion: reduce) {
     .admin-table tbody tr,
@@ -330,28 +344,28 @@ body.app .dispositivos-page-size {
     padding: 2px 9px;
 }
 
-/* Mantener el icono y el texto visibles */
-.admin-player-status--active > * {
-    position: relative;
-    z-index: 1;
-}
+    /* Mantener el icono y el texto visibles */
+    .admin-player-status--active > * {
+        position: relative;
+        z-index: 1;
+    }
 
-/* Ondas que salen del borde de la etiqueta */
-.admin-player-status--active::before,
-.admin-player-status--active::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border: 1px solid #16a34a;
-    border-radius: inherit;
-    pointer-events: none;
-    z-index: 0;
-    animation: admin-status-wave 3s ease-out infinite;
-}
+    /* Ondas que salen del borde de la etiqueta */
+    .admin-player-status--active::before,
+    .admin-player-status--active::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border: 1px solid #16a34a;
+        border-radius: inherit;
+        pointer-events: none;
+        z-index: 0;
+        animation: admin-status-wave 3s ease-out infinite;
+    }
 
-.admin-player-status--active::after {
-    animation-delay: 1.5s;
-}
+    .admin-player-status--active::after {
+        animation-delay: 1.5s;
+    }
 
 @keyframes admin-status-wave {
     0% {
@@ -387,17 +401,17 @@ body.app .dispositivos-page-size {
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
 }
 
-.admin-baja-modal .modal-body {
-    padding: 30px 14px 14px;
-}
+    .admin-baja-modal .modal-body {
+        padding: 30px 14px 14px;
+    }
 
-.admin-baja-modal .modal-header {
-    position: relative;
-    display: flex;
-    justify-content: flex-end;
-    padding: 16px 18px 0 !important;
-    border: 0;
-}
+    .admin-baja-modal .modal-header {
+        position: relative;
+        display: flex;
+        justify-content: flex-end;
+        padding: 16px 18px 0 !important;
+        border: 0;
+    }
 
 .admin-baja-close {
     position: static;
@@ -483,13 +497,13 @@ body.app .dispositivos-page-size {
     font-size: 12px;
 }
 
-/* Línea vertical */
-.admin-baja-arrow::before {
-    content: "";
-    width: 1px;
-    height: 22px;
-    background-color: #cbd5e1;
-}
+    /* Línea vertical */
+    .admin-baja-arrow::before {
+        content: "";
+        width: 1px;
+        height: 22px;
+        background-color: #cbd5e1;
+    }
 
 /* Mensaje */
 .admin-baja-notice {
@@ -511,13 +525,80 @@ body.app .dispositivos-page-size {
     font-weight: 600;
 }
 
-.admin-baja-confirm:disabled {
-    background: #ce142d;
-    border-color: #ce142d;
-    color: #fff;
-    opacity: 1;
-    cursor: not-allowed;
+    .admin-baja-confirm:disabled {
+        background: #ce142d;
+        border-color: #ce142d;
+        color: #fff;
+        opacity: 1;
+        cursor: not-allowed;
+    }
+
+
+/* Estados de vinculación del Player */
+
+.admin-binding-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
 }
+
+.admin-binding--pending {
+    background-color: #FFF4D6;
+    color: #966000;
+}
+
+.admin-binding--approved {
+    background-color: #E6F5EA;
+    color: #23834A;
+}
+
+.admin-binding--rejected {
+    background-color: #FCE9E9;
+    color: #C43D3D;
+}
+
+.admin-binding--neutral {
+    background-color: #F0F1F3;
+    color: #687384;
+}
+
+
+/* Indicador luminoso para solicitudes pendientes */
+.admin-binding--pending::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background-color: #B77900;
+    vertical-align: middle;
+    animation: admin-binding-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes admin-binding-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+/* Respetar preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+    .admin-binding--pending::before {
+        animation: none;
+    }
+}
+
 
 /* ==========================================
    ANIMACIÓN SECUENCIAL
@@ -595,3 +676,204 @@ body.app .admin-table-card {
         max-width: 100%;
         overflow-x: auto;
     }
+
+/* Credencial de autenticación — Rebel Wings */
+.admin-security-heading-icon,
+.admin-credential-panel .admin-credential-heading-icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    color: #c88b00;
+    background: #fff6dc;
+    font-size: 18px;
+}
+
+.admin-credential-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 12px;
+    border: 1px solid #e5e9f0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+    .admin-credential-info > i {
+        color: #8a98ad;
+        font-size: 17px;
+    }
+
+    .admin-credential-info div {
+        min-width: 0;
+    }
+
+    .admin-credential-info span {
+        display: block;
+        color: #7b8797;
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .admin-credential-info strong {
+        display: block;
+        color: #273243;
+        font-size: 12px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+.admin-credential-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 76px;
+    padding: 12px;
+    border: 1px solid #e4e8ef;
+    border-radius: 11px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.admin-credential-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 10px;
+    font-size: 18px;
+    transition: transform .25s ease;
+}
+
+.admin-credential-action-copy {
+    display: block;
+    min-width: 0;
+}
+
+    .admin-credential-action-copy strong {
+        display: block;
+        color: #253042;
+        font-size: 12px;
+        font-weight: 650;
+        margin-bottom: 4px;
+    }
+
+    .admin-credential-action-copy small {
+        display: block;
+        color: #798598;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+.admin-credential-action--renew .admin-credential-action-icon {
+    color: #b87900;
+    background: #fff3d8;
+}
+
+.admin-credential-action--revoke .admin-credential-action-icon {
+    color: #dc3545;
+    background: #fff0f1;
+}
+
+.admin-credential-action:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(34, 46, 67, .09);
+}
+
+.admin-credential-action--renew:not(:disabled):hover {
+    border-color: #f4b12a;
+    background: #fffdf7;
+}
+
+.admin-credential-action--revoke:not(:disabled):hover {
+    border-color: #e9a6ae;
+    background: #fffafa;
+}
+
+.admin-credential-action--renew:not(:disabled):hover .admin-credential-action-icon {
+    transform: rotate(180deg);
+}
+
+.admin-credential-action:disabled {
+    cursor: not-allowed;
+    opacity: .58;
+}
+
+.admin-credential-action:focus-visible {
+    outline: 2px solid #f5a900;
+    outline-offset: 2px;
+}
+
+/* Panel de credenciales no disponible. */
+.admin-token-panel--disabled {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* Animación de indicadores de credenciales */
+.admin-pill--waiting::before,
+.admin-pill--active::before {
+    animation: admin-token-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes admin-token-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.2;
+    }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .admin-pill--waiting::before,
+    .admin-pill--active::before {
+        animation: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-credential-action, .admin-credential-action-icon {
+        transition: none;
+    }
+
+        .admin-credential-action:not(:disabled):hover {
+            transform: none;
+        }
+
+            .admin-credential-action:not(:disabled):hover .admin-credential-action-icon {
+                animation: none;
+                transform: none;
+            }
+}
+
+.admin-security-heading-icon {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.admin-binding-notice {
+    background: #fffbf0;
+    border-color: #f5e6bd !important;
+}
+
+.admin-credential-action--revoke:not(:disabled):hover i {
+    animation: adminIconVibrate .12s linear 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-credential-action--revoke:not(:disabled):hover i {
+        animation: none;
+    }
+}
