@@ -1,0 +1,378 @@
+﻿
+@{
+    ViewBag.Title = "Configurar Dispositivos";
+}
+
+<link rel="stylesheet" href="~/Content/Styles-Mod/Configuracion/configurar-dispositivos.css" />
+
+<main class="main-content main-content-admin-dispositivos" id="configurar-dispositivos"
+      ObtenerRegiones="@Url.Action("ObtenerRangos", "Dispositivos")"
+      ObtenerEstatusAdmin="@Url.Action("ObtenerEstatusAdmin", "Dispositivos")"
+      ObtenerPlayersConfigDisp="@Url.Action("ObtenerPlayersConfigDisp", "Dispositivos")"
+      ObtenerPlayerPorId="@Url.Action("ObtenerPlayerPorId", "Dispositivos")"
+      ObtenerUnidadesAlmacenamiento="@Url.Action("ObtenerUnidadesAlmacenamiento", "Dispositivos")"
+      ObtenerSucursales="@Url.Action("ObtenerSucursales", "Dispositivos")"
+      ObtenerCifrasKPIPlayersAdmin="@Url.Action("ObtenerCifrasKPIPlayersAdmin","Dispositivos")"
+      ObtenerConfiguracionPlayer="@Url.Action("ObtenerConfiguracionPlayer", "Dispositivos")"
+      GuardarConfiguracionPlayer="@Url.Action("GuardarConfiguracionPlayer", "Dispositivos")"
+      GuardarConfiguracionMasivaPlayer="@Url.Action("GuardarConfiguracionMasivaPlayer", "Dispositivos")">
+    <div class="section__content section__content--p30">
+        <div class="container-fluid">
+            <div class="page-header">
+                <div>
+                    <h1>Configuración de Dispositivos</h1>
+                    <p class="subtitle">Configura los dispositivos registrados.</p>
+                </div>
+                <div class="page-header__actions">
+                    <button type="button" class="m-btn m-btn--primary" data-bs-toggle="modal" data-bs-target="#config-bulk-modal">
+                        <i class="fa-solid fa-sliders"></i>
+                        Configuración masiva
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI de detección y clasificación de dispositivos -->
+            <div class="row row-tight">
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head">
+                            <p class="stat-card__label">Total registrados</p>
+                            <span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-desktop"></i></span>
+                        </div>
+                        <p class="stat-card__value" id="players-count-total">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head">
+                            <p class="stat-card__label">Activos</p>
+                            <span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-circle-check"></i></span>
+                        </div>
+                        <p class="stat-card__value text-success" id="players-count-activos">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head">
+                            <p class="stat-card__label">Inactivos</p>
+                            <span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-circle-xmark"></i></span>
+                        </div>
+                        <p class="stat-card__value text-danger" id="players-count-inactivos">0</p>
+                    </article>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3 mb-3">
+                    <article class="stat-card size-kpi">
+                        <div class="stat-card__head">
+                            <p class="stat-card__label">Sin token</p>
+                            <span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-key"></i></span>
+                        </div>
+                        <p class="stat-card__value text-warning" id="players-count-sin-token">0</p>
+                    </article>
+                </div>
+            </div>
+
+            <!-- Sección: Filtrado de información -->
+            <div class="m-card mb-4">
+                <div class="row g-3 align-items-end">
+                    <!-- Buscar dispositivo -->
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label for="buscar" class="form-label small">Buscar</label>
+                        <input type="text" id="buscar" class="form-control small" placeholder="Identificador, sucursal o num serie" />
+                    </div>
+
+                    <!-- Sucursal -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="region" class="form-label small">Región</label>
+                        <select id="region" class="form-select small">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+
+                    <!-- Estatus administrativo -->
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="estatus-admin" class="form-label small">Estatus</label>
+                        <select id="estatus-admin" class="form-select small">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="col-12 col-xl-2">
+                        <div class="d-flex gap-2">
+                            <button type="button" id="buscar-filtros" class="m-btn m-btn--primary flex-fill justify-content-center" title="Buscar" aria-label="Buscar">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                            <button type="button" id="reestablecer-filtros" class="m-btn m-btn--ghost flex-fill justify-content-center" title="Limpiar" aria-label="Limpiar">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listado de dispositivos: tarjetas y tabla comparten filtros y paginación. -->
+
+            <div class="monitor-toolbar mb-3">
+                <h2 class="monitor-section-title">Dispositivos</h2>
+
+                <div class="monitor-toolbar-actions">
+                    <span class="monitor-result-count" id="config-result-count">0 dispositivos</span>
+
+                    <div class="btn-group" role="group" aria-label="Modo de visualización">
+                        <button type="button" id="config-view-grid" class="btn btn-outline-secondary selected" title="Vista de tarjetas" aria-label="Vista de tarjetas">
+                            <i class="fa-solid fa-table-cells-large"></i>
+                        </button>
+
+                        <button type="button" id="config-view-table" class="btn btn-outline-secondary" title="Vista de tabla" aria-label="Vista de tabla">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
+
+                    <select id="config-page-size" class="form-select monitor-page-size" aria-label="Dispositivos por página">
+                        <option value="6">6 por página</option>
+                        <option value="12" selected>12 por página</option>
+                        <option value="24">24 por página</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <hr class="my-3" />
+
+            <!-- Vista de tarjetas -->
+            <div id="config-device-grid"></div>
+
+            <!-- Vista de tabla: DataTables se inicializa desde JavaScript. -->
+            <div id="config-table-container" class="d-none">
+                <table id="config-devices-table" class="table devices-table w-100">
+                    <thead>
+                        <tr>
+                            <th>Dispositivo</th>
+                            <th>MAC</th>
+                            <th>Número de serie</th>
+                            <th>Región</th>
+                            <th>Estatus</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Resumen y navegación de páginas -->
+            <div class="monitor-pagination mt-4">
+                <span id="config-pagination-info">Mostrando 0 de 0 dispositivos</span>
+                <div id="config-pagination" class="pages"></div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+
+<!-- Modal de configuración individual -->
+<div class="modal fade" id="config-player-modal" tabindex="-1"
+     aria-labelledby="config-player-modal-title" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content config-modal-content">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h2 class="modal-title fs-5" id="config-player-modal-title">
+                        Configuración del dispositivo
+                    </h2>
+                    <p class="text-muted small mb-0" id="config-player-description"></p>
+                </div>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <input type="hidden" id="config-player-id" />
+                <!-- Pestañas de configuración -->
+                <div class="config-modal-tabs mt-3 mb-4">
+                    <div class="config-modal-tab active">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>Audio</span>
+                    </div>
+                    @*<div class="config-modal-tab config-modal-tab-disabled">
+                            Más opciones próximamente
+                        </div>*@
+                </div>
+                <!-- Configuración de audio -->
+                <div class="config-audio-section">
+                    <h3 class="fs-6 fw-semibold mb-2">
+                        Seleccionar salida de audio
+                    </h3>
+                    <p class="text-muted small mb-3">
+                        Selecciona la salida de audio que utilizará este Player.
+                    </p>
+                    <div class="config-audio-options">
+                        <!-- HDMI -->
+                        <label class="config-audio-option" for="config-audio-hdmi">
+                            <input type="radio" name="config-audio-output" id="config-audio-hdmi" value="1" />
+                            <span class="config-audio-option-icon">
+                                <i class="fa-solid fa-display"></i>
+                            </span>
+                            <span class="config-audio-option-info">
+                                <span class="config-audio-option-title">HDMI</span>
+                                <span class="config-audio-option-description">
+                                    Audio mediante pantalla
+                                </span>
+                            </span>
+                            <span class="config-audio-option-check">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                        </label>
+
+                        <!-- Jack 3.5 mm -->
+                        <label class="config-audio-option" for="config-audio-jack">
+                            <input type="radio" name="config-audio-output" id="config-audio-jack" value="2" />
+                            <span class="config-audio-option-icon">
+                                <i class="fa-solid fa-headphones"></i>
+                            </span>
+                            <span class="config-audio-option-info">
+                                <span class="config-audio-option-title">Jack 3.5 mm</span>
+                                <span class="config-audio-option-description">
+                                    Salida analógica
+                                </span>
+                            </span>
+                            <span class="config-audio-option-check">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="small text-muted mt-3 mb-0" id="config-player-apply-status"></p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="m-btn m-btn--ghost" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="config-save-player" class="m-btn m-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal de configuración masiva -->
+<div class="modal fade" id="config-bulk-modal" tabindex="-1"
+     aria-labelledby="config-bulk-modal-title" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content config-modal-content">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h2 class="modal-title fs-5" id="config-bulk-modal-title">
+                        Configuración masiva
+                    </h2>
+                    <p class="text-muted small mb-0">
+                        Aplicar configuración a todos los dispositivos
+                    </p>
+                </div>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body pt-0">
+
+                <!-- Pestañas de configuración -->
+                <div class="config-modal-tabs mt-3 mb-4">
+                    <div class="config-modal-tab active">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>Audio</span>
+                    </div>
+                    @*<div class="config-modal-tab config-modal-tab-disabled">
+                            Más opciones próximamente
+                        </div>*@
+                </div>
+
+                <!-- Configuración de audio -->
+                <div class="config-audio-section">
+                    <h3 class="fs-6 fw-semibold mb-2">
+                        Seleccionar salida de audio
+                    </h3>
+
+                    <p class="text-muted small mb-3">
+                        Selecciona la salida de audio para <b>todos los dispositivos</b> registrados,
+                        incluidos los inactivos.
+                    </p>
+
+                    <div class="config-audio-options">
+
+                        <!-- HDMI -->
+                        <label class="config-audio-option" for="config-bulk-audio-hdmi">
+                            <input type="radio" name="config-bulk-audio" id="config-bulk-audio-hdmi" value="1" />
+                            <span class="config-audio-option-icon">
+                                <i class="fa-solid fa-display"></i>
+                            </span>
+                            <span class="config-audio-option-info">
+                                <span class="config-audio-option-title">HDMI</span>
+                                <span class="config-audio-option-description">
+                                    Audio mediante pantalla
+                                </span>
+                            </span>
+                            <span class="config-audio-option-check">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                        </label>
+
+                        <!-- Jack 3.5 mm -->
+                        <label class="config-audio-option" for="config-bulk-audio-jack">
+                            <input type="radio" name="config-bulk-audio" id="config-bulk-audio-jack" value="2" />
+                            <span class="config-audio-option-icon">
+                                <i class="fa-solid fa-headphones"></i>
+                            </span>
+                            <span class="config-audio-option-info">
+                                <span class="config-audio-option-title">Jack 3.5 mm</span>
+                                <span class="config-audio-option-description">
+                                    Salida analógica
+                                </span>
+                            </span>
+                            <span class="config-audio-option-check">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="small text-muted mt-3 mb-0">
+                        Los cambios se aplicarán cuando cada dispositivo esté
+                        autorizado y conectado.
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="m-btn m-btn--ghost" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" id="config-save-bulk" class="m-btn m-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const raspberryImageUrl = '@Url.Content("~/Content/Admin/images/icon/RaspberryPi3.png")';
+</script>
+
+@section scripts {
+    <script src="~/Scripts/Dispositivos/ConfigurarDispositivos.js"></script>
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,633 @@
+﻿/* Configuración de Dispositivos.
+   Complementa Bootstrap 5, theme.css y app.css sin modificar otros módulos. */
+
+body.app .main-content-configurar-dispositivos {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Barra superior: título a la izquierda y controles a la derecha. */
+body.app #configurar-dispositivos .monitor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+body.app #configurar-dispositivos .monitor-toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+body.app #configurar-dispositivos .monitor-section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+body.app #configurar-dispositivos .monitor-result-count {
+    font-size: 13px;
+    color: var(--m-text-muted);
+}
+
+body.app #configurar-dispositivos .monitor-page-size {
+    width: 142px;
+}
+
+body.app #configurar-dispositivos .monitor-toolbar .selected {
+    color: var(--m-accent);
+    border-color: var(--m-accent);
+}
+
+/* Tarjetas de Players. */
+body.app #config-device-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+    body.app #config-device-grid .device-card {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 18px;
+    }
+
+    body.app #config-device-grid .device-top {
+        display: flex;
+        justify-content: space-between;
+        min-height: 28px;
+    }
+
+    body.app #config-device-grid .device-illustration {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 130px;
+    }
+
+        body.app #config-device-grid .device-illustration svg {
+            width: 175px;
+            height: 120px;
+        }
+
+    body.app #config-device-grid .device-name {
+        font-size: 16px;
+        font-weight: 650;
+        margin: 5px 0;
+    }
+
+    body.app #config-device-grid .device-id {
+        font-size: 12px;
+        color: var(--m-text-muted);
+        margin-bottom: 12px;
+    }
+
+    body.app #config-device-grid .device-details {
+        border-top: 1px solid var(--m-border);
+        padding: 15px 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 10px;
+        flex: 1;
+    }
+
+    body.app #config-device-grid .detail {
+        display: flex;
+        gap: 9px;
+        min-width: 0;
+    }
+
+        body.app #config-device-grid .detail i {
+            width: 19px;
+            color: var(--m-text-muted);
+            margin-top: 3px;
+        }
+
+    body.app #config-device-grid .detail-label {
+        color: var(--m-text-muted);
+        font-size: 12px;
+    }
+
+    body.app #config-device-grid .detail-value {
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    /* Indicadores de estado. */
+    body.app #config-device-grid .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        body.app #config-device-grid .status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        body.app #config-device-grid .status.online,
+        body.app #config-device-grid .status.active {
+            color: #087f41;
+            background: #e8f7ed;
+        }
+
+        body.app #config-device-grid .status.offline,
+        body.app #config-device-grid .status.inactive {
+            color: #c52d28;
+            background: #fff0f0;
+        }
+
+        body.app #config-device-grid .status.unknown,
+        body.app #config-device-grid .status.suspended {
+            color: #a87900;
+            background: #fff7e7;
+        }
+
+/* Identidad y región. */
+body.app #configurar-dispositivos .admin-player-identity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+body.app #configurar-dispositivos .admin-player-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background-color: #f1f5f9;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+body.app #configurar-dispositivos .admin-player-code {
+    font-weight: 600;
+    color: #334155;
+}
+
+body.app #configurar-dispositivos .admin-player-region {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+    body.app #configurar-dispositivos .admin-player-region i {
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+/* Botones, tarjetas y KPI. */
+body.app #configurar-dispositivos .card-hover,
+body.app #configurar-dispositivos .stat-card {
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+    body.app #configurar-dispositivos .card-hover:hover,
+    body.app #configurar-dispositivos .stat-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
+body.app #configurar-dispositivos .detail-btn {
+    justify-content: center;
+    width: 100%;
+    border-color: var(--m-warning);
+    color: #b67a00;
+}
+
+body.app #configurar-dispositivos .detail-btn:hover {
+    background: var(--m-warning-soft);
+}
+
+body.app #config-devices-table .configurar-action:hover i {
+    animation: config-icon-vibrate 0.12s linear 3;
+}
+
+.img-disp {
+    width: 230px;
+}
+
+/* Tabla: apariencia consistente con Monitoreo. */
+body.app #config-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid var(--m-border);
+    border-radius: 10px;
+}
+
+body.app #config-devices-table {
+    width: 100% !important;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    body.app #config-devices-table thead th {
+        padding: 14px 12px;
+        color: #94a3b8;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9edf2;
+    }
+
+    body.app #config-devices-table tbody td {
+        padding: 14px 12px;
+        color: #334155;
+        background: #fff;
+        font-size: 13px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        border-bottom: 1px solid #e9edf2;
+    }
+
+    body.app #config-devices-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    body.app #config-devices-table tbody tr {
+        cursor: pointer;
+    }
+
+        body.app #config-devices-table tbody tr:hover td {
+            background-color: #f8fafc;
+        }
+
+            body.app #config-devices-table tbody tr:hover td:first-child {
+                box-shadow: inset 3px 0 0 #ffaa00;
+            }
+
+    /* Conservar espacio para el botón Configurar en la última columna. */
+    body.app #config-devices-table th:last-child,
+    body.app #config-devices-table td:last-child {
+        min-width: 145px;
+    }
+
+    /* Identidad del dispositivo en la primera columna. */
+    body.app #config-devices-table .admin-player-identity {
+        gap: 8px;
+    }
+
+    body.app #config-devices-table .admin-player-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+/* Paginación y estados vacíos. */
+body.app #configurar-dispositivos .monitor-pagination,
+body.app #configurar-dispositivos .pages {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+body.app #configurar-dispositivos .monitor-pagination {
+    font-size: 13px;
+    color: var(--m-text-muted);
+}
+
+body.app #configurar-dispositivos .pages button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid var(--m-border);
+    background: white;
+    border-radius: 6px;
+}
+
+    body.app #configurar-dispositivos .pages button.active {
+        background: var(--m-accent);
+        color: white;
+        border-color: var(--m-accent);
+    }
+
+    body.app #configurar-dispositivos .pages button:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+
+body.app #configurar-dispositivos .empty {
+    text-align: center;
+    padding: 50px 16px;
+    background: white;
+    border: 1px solid var(--m-border);
+    border-radius: 10px;
+}
+
+.configurar-action {
+    border: 1px solid #e0e5ed;
+    background: white;
+    color: #536176;
+    border-radius: 6px;
+    width: 33px;
+    height: 33px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.configurar-action:hover {
+    background-color: #fff5d9;
+    border-color: #ffcc66;
+    color: #a66a00;
+}
+
+/* Estatus administrativo en la tabla */
+body.app #config-devices-table .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+    body.app #config-devices-table .status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    body.app #config-devices-table .status.active {
+        color: #087f41;
+        background: #e8f7ed;
+    }
+
+    body.app #config-devices-table .status.inactive {
+        color: #c52d28;
+        background: #fff0f0;
+    }
+
+    body.app #config-devices-table .status.suspended {
+        color: #a87900;
+        background: #fff7e7;
+    }
+
+    /* Parpadeo del estatus Activo en la tabla */
+    body.app #config-devices-table .status.active::before {
+        animation: config-status-blink 1.5s ease-in-out infinite;
+    }
+
+
+/* ==========================================
+   MODALES DE CONFIGURACIÓN DE DISPOSITIVOS
+   ========================================== */
+
+body.app .config-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Pestañas de configuración */
+body.app .config-modal-tabs {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--m-border);
+}
+
+body.app .config-modal-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+}
+
+    body.app .config-modal-tab.active {
+        color: var(--m-accent);
+        border-bottom-color: var(--m-accent);
+    }
+
+body.app .config-modal-tab-disabled {
+    color: var(--m-text-muted);
+    font-weight: 400;
+    cursor: default;
+}
+
+/* Opciones de salida de audio */
+body.app .config-audio-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+body.app .config-audio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--m-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+    /* Radio oculto visualmente, pero funcional */
+    body.app .config-audio-option input[type="radio"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    body.app .config-audio-option:hover {
+        border-color: var(--m-accent);
+    }
+
+    body.app .config-audio-option:has(input:checked) {
+        border-color: var(--m-accent);
+        background-color: var(--m-warning-soft);
+    }
+
+    body.app .config-audio-option:has(input:focus-visible) {
+        outline: 2px solid var(--m-accent);
+        outline-offset: 3px;
+    }
+
+/* Icono izquierdo */
+body.app .config-audio-option-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--m-text-muted);
+}
+
+/* Información */
+body.app .config-audio-option-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+body.app .config-audio-option-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.app .config-audio-option-description {
+    font-size: 12px;
+    color: var(--m-text-muted);
+}
+
+/* Indicador derecho */
+body.app .config-audio-option-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #b0b0b0;
+}
+
+body.app .config-audio-option:has(input:checked)
+.config-audio-option-check {
+    color: var(--m-accent);
+}
+
+body.app .config-audio-option:has(input:checked)
+.config-audio-option-icon {
+    color: var(--m-accent);
+}
+
+/* Adaptación móvil */
+@media (max-width: 420px) {
+    body.app .config-modal-tabs {
+        gap: 10px;
+    }
+
+    body.app .config-modal-tab {
+        font-size: 12px;
+    }
+
+    body.app .config-audio-option {
+        padding: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.app .config-audio-option {
+        transition: none;
+    }
+}
+
+
+/* Animaciones. */
+body.app #config-device-grid .status.active::before {
+    animation: config-status-blink 1.5s ease-in-out infinite;
+}
+
+
+@keyframes config-status-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.2;
+    }
+}
+
+@keyframes config-icon-vibrate {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+/* Adaptación a diferentes tamaños de pantalla. */
+@media (max-width: 1200px) {
+    body.app #config-device-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    body.app #config-device-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.app #configurar-dispositivos .monitor-toolbar {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 435px) {
+    body.app #configurar-dispositivos .monitor-pagination,
+    body.app #configurar-dispositivos .pages {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 420px) {
+    body.app #config-device-grid .device-top {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    body.app #config-device-grid .device-details {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.app #configurar-dispositivos .card-hover,
+    body.app #configurar-dispositivos .stat-card,
+    body.app #config-devices-table tbody tr {
+        transition: none;
+    }
+
+    body.app #config-devices-table .config-btn-player:hover i {
+        animation: none;
+    }
+}

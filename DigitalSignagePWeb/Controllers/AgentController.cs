@@ -1446,5 +1446,165 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Consulta la configuración vigente del Player autenticado,        
+        /// </summary>
+        /// <returns>Configuración del Player en formato JSON.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Se produce cuando SQL Server devuelve un resultado inválido.
+        /// </exception>
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult ObtenerConfiguracionPlayer()
+        {
+            try
+            {
+                // Validar la identidad del Player mediante su token Bearer.
+                PlayerTokenValidado player = ValidarTokenConsultaPlayer();
+
+                if (player == null)
+                {
+                    Response.StatusCode = 401;
+                    Response.SuppressFormsAuthenticationRedirect = true;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "Token inválido, revocado o vencido."
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                // Consultar únicamente la configuración del Player autenticado.
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_player", player.id_player.ToString() }
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCConsultaConfiguracionPlayer,
+                    parametros
+                );
+
+                if (string.IsNullOrWhiteSpace(resultado) ||
+                    resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                var configuraciones =
+                    JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultado);
+
+                if (configuraciones == null || configuraciones.Count != 1)
+                {
+                    throw new InvalidOperationException(
+                        "No se obtuvo una configuración válida para el Player.");
+                }
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = "Configuración consultada correctamente.",
+                    Data = configuraciones[0]
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible consultar la configuración del Player."
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// Confirma la versión de configuración aplicada por el Player autenticado.
+        /// </summary>
+        /// <param name="version_aplicada">Versión aplicada por el Agent.</param>
+        /// <returns>Resultado de la confirmación en formato JSON.</returns>
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult ConfirmarConfiguracionPlayer(ConfiguracionPlayerConfirmarRequest request)
+        {
+            try
+            {
+                // Validar la identidad del Player.
+                PlayerTokenValidado player = ValidarTokenConsultaPlayer();
+
+                if (player == null)
+                {
+                    Response.StatusCode = 401;
+                    Response.SuppressFormsAuthenticationRedirect = true;
+
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = "Token inválido, revocado o vencido."
+                    });
+                }
+
+                if (request == null || request.version_aplicada <= 0)
+                    throw new ArgumentException("La versión aplicada no es válida.");
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_player", player.id_player.ToString() },
+                    { "version_aplicada", request.version_aplicada.ToString() }                
+                };
+
+                AccesoDatos accesoDatos = new AccesoDatos();
+
+                string resultado = accesoDatos.ExecuteProcedure(
+                    accesoDatos.GCConfirmarConfiguracionPlayer,
+                    parametros
+                );
+
+                if (string.IsNullOrWhiteSpace(resultado) ||
+                    resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(resultado);
+                }
+
+                var resultados =
+                    JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                    throw new InvalidOperationException("SQL Server no devolvió un resultado válido.");
+
+                string mensaje = Convert.ToString(resultados[0]["Resultado"]);
+
+                if (mensaje.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(mensaje);
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = mensaje
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                Response.StatusCode = 500;
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = HttpContext.IsDebuggingEnabled
+                        ? ex.ToString()
+                        : "No fue posible confirmar la configuración del Player."
+                });
+            }
+        }
     }
 }

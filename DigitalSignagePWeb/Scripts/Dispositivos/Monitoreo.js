@@ -579,7 +579,7 @@ class Monitoreo {
                         <div>
                             <div class="detail-label fw-bold">MAC</div>
                             <div class="detail-value">
-                                ${this.escapeHTML(device.direccion_mac)}
+                                ${this.escapeHTML(device.direccion_mac || 'Por asignar')}
                             </div>
                         </div>
 
@@ -605,7 +605,7 @@ class Monitoreo {
                         <div>
                             <div class="detail-label fw-bold">Contenido</div>
                             <div class="detail-value">
-                                ${this.escapeHTML(device.ultimo_contenido_reportado)}
+                                ${this.escapeHTML(device.ultimo_contenido_reportado || 'Por asignar')}
                             </div>
                         </div>
 

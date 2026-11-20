@@ -130,6 +130,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccesoDatos.cs" />
+    <Compile Include="Models\ConfiguracionPlayerConfirmarRequest.cs" />
     <Compile Include="Models\InformacionUsuario.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Models\PlayerComandoActivo.cs" />
@@ -222,6 +223,7 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\Styles-Mod\Configuracion\configurar-dispositivos.css" />
     <Content Include="Content\Styles-Mod\Dispositivos\administrar-dispositivos.css" />
     <Content Include="Content\Styles-Mod\SideBar-Gen.css" />
     <Content Include="Content\Styles-Mod\Monitoreo\monitoreo-dispositivos.css" />
@@ -322,6 +324,7 @@
     <Content Include="Scripts\DataTables\datatables.min.css" />
     <Content Include="Scripts\DataTables\datatables.min.js" />
     <Content Include="Scripts\Dispositivos\AdministrarDispositivos.js" />
+    <Content Include="Scripts\Dispositivos\ConfigurarDispositivos.js" />
     <Content Include="Scripts\Dispositivos\Monitoreo.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -355,6 +358,7 @@
     <Content Include="Views\Shared\_Footer.cshtml" />
     <Content Include="Views\Dispositivos\Monitoreo.cshtml" />
     <Content Include="Views\Dispositivos\AdministrarDispositivos.cshtml" />
+    <Content Include="Views\Dispositivos\ConfigurarDispositivos.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

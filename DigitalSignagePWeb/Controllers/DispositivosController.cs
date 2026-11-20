@@ -32,6 +32,12 @@ namespace DigitalSignagePWeb.Controllers
             return View();
         }
 
+
+        // GET: Configurar Dispositivos
+        public ActionResult ConfigurarDispositivos()
+        {
+            return View();
+        }
         #endregion
 
         #region Metodos Monitoreo
@@ -1022,7 +1028,6 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
-
         /// <summary>
         /// Consulta la información de vinculación y seguridad de un Player
         /// mediante su número de serie.
@@ -1168,7 +1173,6 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
-
         /// <summary>
         /// Autoriza o rechaza una solicitud de vinculación de un Player.
         /// Valida la sesión del administrador y ejecuta la resolución
@@ -1187,8 +1191,7 @@ namespace DigitalSignagePWeb.Controllers
         /// Resultado JSON con Status, Message y Data.
         /// </returns>
         [HttpPost]
-        [Authorize]
-       
+        [Authorize]       
         public ActionResult ResolverSolicitudVinculacionPlayer(long id_solicitud_vinculacion, bool autorizar, string observaciones = null)
         {
             try
@@ -1310,8 +1313,253 @@ namespace DigitalSignagePWeb.Controllers
             }
         }
 
+        #endregion
+
+        #region Metodos Configurar dispositivos
+
+        //GET: Obtener todos los Players para el modulo de configurar dispositivos
+        [HttpGet]
+        [Authorize]
+        public ActionResult ObtenerPlayersConfigDisp(string busqueda = null, int? id_estado = null, int? id_estatus_admin = null)
+        {
+            try
+            {
+                var parametros = new Dictionary<string, string>
+                {
+                    { "busqueda", string.IsNullOrWhiteSpace(busqueda) ? null : busqueda.Trim() },
+                    { "id_estado", id_estado?.ToString() },
+                    { "id_estatus_admin", id_estatus_admin?.ToString() }
+                };
+
+                string resultado = AccesoDatos.ExecuteProcedure(
+                    AccesoDatos.GCConsultaPlayersConfigDisp,
+                    parametros
+                );
+
+                if (resultado.StartsWith("Error:"))
+                {
+                    return Json(new
+                    {
+                        Status = "ERROR",
+                        Message = resultado
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                var players = JsonConvert.DeserializeObject<List<Player>>(resultado);
+
+                return Content(
+                         JsonConvert.SerializeObject(new
+                         {
+                             Status = "OK",
+                             Data = players
+                         }),
+                         "application/json"
+                     );
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = ex.Message,
+                    ExceptionMessage = ex.InnerException?.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// Consulta la configuración registrada para un Player.
+        /// Permite identificar si el dispositivo tiene una salida configurada.
+        /// </summary>
+        /// <param name="id_player">Identificador del Player.</param>
+        /// <returns>Configuración de dispositivo en formato JSON.</returns>
+        [HttpGet]
+        [Authorize]
+        public ActionResult ObtenerConfiguracionPlayer(int id_player)
+        {
+            try
+            {
+                if (id_player <= 0)
+                    throw new ArgumentException("El identificador del Player no es válido.");
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_player", id_player.ToString() }
+                };
+
+                string resultado = AccesoDatos.ExecuteProcedure(
+                    AccesoDatos.GCConsultaConfiguracionPlayer,
+                    parametros
+                );
+
+                if (string.IsNullOrWhiteSpace(resultado))
+                    throw new InvalidOperationException("SQL Server no devolvió información.");
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(resultado);
+
+                var configuraciones = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultado);
+
+                if (configuraciones == null || configuraciones.Count != 1)
+                    throw new InvalidOperationException(
+                        "No se obtuvo una configuración válida para el Player."
+                    );
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Data = configuraciones[0]
+                }, JsonRequestBehavior.AllowGet);
+
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// Registra o actualiza la configuracíón de un Player.
+        /// La administración de versiones y concurrencia se realiza en SQL Server.
+        /// </summary>
+        /// <param name="id_player">Identificador del Player.</param>
+        /// <param name="id_audio">Identificador de la salida de audio seleccionada.</param>
+        /// <returns>Resultado de la operación.</returns>
+        [HttpPost]
+        [Authorize]
+        public ActionResult GuardarConfiguracionPlayer(int id_player, int id_audio)
+        {
+            try
+            {
+                if (id_player <= 0)
+                    throw new ArgumentException("El identificador del Player no es válido.");
+
+                if (id_audio <= 0)
+                    throw new ArgumentException("Debe seleccionar una salida de audio válida.");
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_player", id_player.ToString() },
+                    { "id_audio", id_audio.ToString() }
+                };
+
+                string resultado = AccesoDatos.ExecuteProcedure(
+                    AccesoDatos.GCGuardarConfiguracionPlayer,
+                    parametros
+                );
+
+                if (string.IsNullOrWhiteSpace(resultado))
+                    throw new InvalidOperationException("SQL Server no devolvió información.");
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(resultado);
+
+                var resultados = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                    throw new InvalidOperationException(
+                        "SQL Server no devolvió un resultado válido."
+                    );
+
+                string mensaje = Convert.ToString(resultados[0]["Resultado"]);
+
+                if (mensaje.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(mensaje);
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = mensaje
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Registra o actualiza masivamente la configuración
+        /// de todos los Players registrados.
+        /// La validación, concurrencia y administración de versiones
+        /// se realizan mediante el procedimiento almacenado.
+        /// </summary>
+        /// <param name="id_audio">Identificador de la salida de audio.</param>
+        /// <returns>Resultado de la operación y cantidad de registros afectados.</returns>
+        [HttpPost]
+        [Authorize]
+        public ActionResult GuardarConfiguracionMasivaPlayer(int id_audio)
+        {
+            try
+            {
+                if (id_audio <= 0)
+                    throw new ArgumentException("Debe seleccionar una salida de audio válida.");
+
+                var parametros = new Dictionary<string, string>
+                {
+                    { "id_audio", id_audio.ToString() }
+                };
+
+                string resultado = AccesoDatos.ExecuteProcedure(
+                    AccesoDatos.GCGuardarConfiguracionMasivaPlayer,
+                    parametros
+                );
+
+                if (string.IsNullOrWhiteSpace(resultado))
+                    throw new InvalidOperationException("SQL Server no devolvió información.");
+
+                if (resultado.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(resultado);
+
+                var resultados = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(resultado);
+
+                if (resultados == null || resultados.Count != 1)
+                    throw new InvalidOperationException("SQL Server no devolvió un resultado válido.");
+
+                var registro = resultados[0];
+
+                string mensaje = Convert.ToString(registro["Resultado"]);
+
+                if (string.IsNullOrWhiteSpace(mensaje))
+                    throw new InvalidOperationException("SQL Server no devolvió un mensaje válido.");
+
+                if (mensaje.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(mensaje);
+
+                return Json(new
+                {
+                    Status = "OK",
+                    Message = mensaje,
+                    Insertados = Convert.ToInt32(registro["Insertados"]),
+                    Actualizados = Convert.ToInt32(registro["Actualizados"])
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+
+                return Json(new
+                {
+                    Status = "ERROR",
+                    Message = ex.Message,
+                    ExceptionMessage = ex.InnerException?.Message
+                });
+            }
+        }
 
 
-        #endregion 
+        #endregion
     }
 }

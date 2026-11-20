@@ -79,7 +79,24 @@ namespace DigitalSignagePWeb.Models
 
         #endregion
 
+        #region Configurar dispositivos
 
+        //SP para consultar players administracion
+        public string GCConsultaPlayersConfigDisp { get { return "EXEC SpOpMxDS_ConsultaPlayersConfigurarDisp @busqueda, @id_estado, @id_estatus_admin"; } }
+
+        //SP para consultar la configuracion de un player (individual)
+        public string GCConsultaConfiguracionPlayer { get { return "EXEC SpOpMxDS_ConsultaConfiguracionPlayer @id_player"; } }
+
+        //SP para guardar configuracion de players (individual)
+        public string GCGuardarConfiguracionPlayer { get { return "EXEC SpOpMxDS_GuardarConfiguracionPlayer @id_player, @id_audio"; } }
+
+        //SP para guardar configuracion de players (Masiva)
+        public string GCGuardarConfiguracionMasivaPlayer { get { return "EXEC SpOpMxDS_GuardarConfiguracionMasivaPlayer @id_audio"; } }
+        
+        // SP para confirmar la versión de configuración aplicada por el Player.        
+        public string GCConfirmarConfiguracionPlayer { get { return "EXEC SpOpMxDS_ConfirmarConfiguracionPlayer @id_player, @version_aplicada"; } }
+
+        #endregion
 
         #region Agent
         /// <summary>
