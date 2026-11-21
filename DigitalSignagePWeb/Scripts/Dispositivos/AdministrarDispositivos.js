@@ -13,7 +13,7 @@
         // Control de actualización automática del módulo.
         this.autoRefreshTimer = null;
         this.autoRefreshEnCurso = false;
-        this.autoRefreshIntervalo = 30000;
+        this.autoRefreshIntervalo = 20000;
 
         // Control de concurrencia entre consultas manuales y automáticas.
         this.playersConsultaVersion = 0;

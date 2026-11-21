@@ -9,6 +9,13 @@ class ConfigurarDispositivos {
         this.players = [];
         this.vista = 'cards';
         this.consultaVersion = 0;
+
+        // Control de consultas manuales y actualización automática.
+        this.consultasManualesActivas = 0;
+        this.autoRefreshTimer = null;
+        this.autoRefreshEnCurso = false;
+        this.autoRefreshIntervalo = 20000;
+
         this.$modulo = $('#configurar-dispositivos');
 
         this.raspberryImageUrl = typeof raspberryImageUrl !== 'undefined'
@@ -24,6 +31,8 @@ class ConfigurarDispositivos {
         await this.cargarEstatusAdmin();
         await this.cargarKPIPlayers();
         await this.cargarPlayers();
+
+        this.iniciarActualizacionAutomatica();
     }
 
     /** Obtiene una URL desde los atributos existentes de la vista. */
@@ -99,7 +108,8 @@ class ConfigurarDispositivos {
     }
 
     /** Actualiza los cuatro indicadores utilizando la consulta existente. */
-    async cargarKPIPlayers() {
+    async cargarKPIPlayers(esActualizacionAutomatica = false) {
+
         try {
             const response = await $.ajax({
                 url: this.obtenerUrl('ObtenerCifrasKPIPlayersAdmin'),
@@ -116,24 +126,41 @@ class ConfigurarDispositivos {
             $('#players-count-inactivos').text(kpi.total_inactivos ?? 0);
             $('#players-count-sin-token').text(kpi.total_sin_token ?? 0);
         } catch (error) {
-            this.mostrarError(error, 'Error al cargar indicadores');
+            if (esActualizacionAutomatica) {
+                console.error('Error al actualizar indicadores:', error);
+            } else {
+                this.mostrarError(error, 'Error al cargar indicadores');
+            }
         }
     }
 
     /**
-    * Consulta Players con los filtros de la vista.
-    * El estatus se envía solo cuando el usuario selecciona uno;
-    * de forma predeterminada incluye activos, inactivos y suspendidos.
-    */
-    async cargarPlayers() {
+     * Consulta Players respetando los filtros actuales.
+     * Evita que una actualización automática sobrescriba búsquedas manuales.
+     */
+    async cargarPlayers(esActualizacionAutomatica = false) {
+
+        if (esActualizacionAutomatica && this.consultasManualesActivas > 0) {
+            return;
+        }
+
+        const versionConsulta = ++this.consultaVersion;
+
+        if (!esActualizacionAutomatica) {
+            this.consultasManualesActivas++;
+        }
+
         try {
-            Loading();
+
+            if (!esActualizacionAutomatica) {
+                Loading();
+            }
 
             const response = await $.ajax({
-                url: $('#configurar-dispositivos').attr('ObtenerPlayersConfigDisp'),
+                url: this.obtenerUrl('ObtenerPlayersConfigDisp'),
                 type: 'GET',
                 dataType: 'JSON',
-                data: { // Envio de parametros para busqueda de players
+                data: {
                     busqueda: $('#buscar').val().trim(),
                     id_estado: $('#region').val() || null,
                     id_estatus_admin: $('#estatus-admin').val() || null
@@ -141,36 +168,118 @@ class ConfigurarDispositivos {
                 cache: false
             });
 
-            if (response.Status === 'OK') {
+            // Ignorar respuestas anteriores a una búsqueda más reciente.
+            if (
+                versionConsulta !== this.consultaVersion ||
+                (esActualizacionAutomatica && this.consultasManualesActivas > 0)
+            ) {
+                return;
+            }
 
-                this.players = response.Data;
+            if (response.Status !== 'OK') {
+                throw new Error(response.Message || 'No se recibió el detalle del error.');
+            }
 
-                // Cargar los Players en DataTables.
-                this.table.clear();
-                this.table.rows.add(response.Data);
-                this.table.draw();
+            const paginaActual = this.table.page();
 
-            } else {
-                Alerts.error(
-                    response.Message || 'No se recibió el detalle del error.',
-                    'Error al cargar dispositivos'
+            this.players = response.Data || [];
+
+            this.table.clear();
+            this.table.rows.add(this.players);
+            this.table.draw(esActualizacionAutomatica ? false : true);
+
+            if (esActualizacionAutomatica) {
+                const totalPaginas = this.table.page.info().pages;
+                const paginaDestino = Math.min(
+                    paginaActual,
+                    Math.max(0, totalPaginas - 1)
                 );
+
+                if (this.table.page() !== paginaDestino) {
+                    this.table.page(paginaDestino).draw('page');
+                }
             }
 
         } catch (error) {
-            console.error('Error al cargar dispositivos:', error);
 
-            Alerts.error(
-                error.responseJSON?.Message ||
-                error.responseText ||
-                error.message ||
-                String(error),
-                'Error al cargar dispositivos'
-            );
+            if (esActualizacionAutomatica) {
+                console.error('Error al actualizar dispositivos:', error);
+            } else {
+                this.mostrarError(error, 'Error al cargar dispositivos');
+            }
 
         } finally {
-            StopLoading();
+
+            if (!esActualizacionAutomatica) {
+                this.consultasManualesActivas--;
+                StopLoading();
+            }
         }
+    }
+
+    /** Detiene el temporizador de actualización automática. */
+    detenerActualizacionAutomatica() {
+
+        if (this.autoRefreshTimer !== null) {
+            clearTimeout(this.autoRefreshTimer);
+            this.autoRefreshTimer = null;
+        }
+    }
+
+    /** Actualiza periódicamente Players y KPI sin interrumpir la edición. */
+    iniciarActualizacionAutomatica() {
+
+        this.detenerActualizacionAutomatica();
+
+        const actualizar = async () => {
+
+            // No actualizar mientras la pestaña esté oculta,
+            // exista un modal abierto o una consulta manual activa.
+            if (
+                document.hidden ||
+                $('#config-player-modal.show, #config-bulk-modal.show').length > 0 ||
+                this.consultasManualesActivas > 0 ||
+                this.autoRefreshEnCurso
+            ) {
+                this.autoRefreshTimer = setTimeout(
+                    actualizar,
+                    this.autoRefreshIntervalo
+                );
+                return;
+            }
+
+            this.autoRefreshEnCurso = true;
+
+            try {
+
+                await this.cargarKPIPlayers(true);
+
+                if (
+                    this.consultasManualesActivas === 0 &&
+                    $('#config-player-modal.show, #config-bulk-modal.show').length === 0
+                ) {
+                    await this.cargarPlayers(true);
+                }
+
+            } catch (error) {
+
+                console.error('Error durante la actualización automática:', error);
+
+            } finally {
+
+                this.autoRefreshEnCurso = false;
+
+                this.autoRefreshTimer = setTimeout(
+                    actualizar,
+                    this.autoRefreshIntervalo
+                );
+            }
+        };
+
+        this.autoRefreshTimer = setTimeout(
+            actualizar,
+            this.autoRefreshIntervalo
+        );
     }
 
     /** DataTables administra la paginación de ambas presentaciones. */
@@ -222,7 +331,7 @@ class ConfigurarDispositivos {
                         <i class="fa-solid fa-location-dot"></i>
                         <span>${self.escapeHTML(data || 'Sin región')}</span>
                     </span>`
-                },                
+                },
                 {
                     data: 'id_estatus_admin',
                     className: 'text-center',
@@ -456,6 +565,27 @@ class ConfigurarDispositivos {
             return;
         }
 
+        // Advertir cuando el Player está administrativamente inactivo.
+        const player = this.players.find(
+            p => Number(p.id_player) === idPlayer
+        );
+
+        if (Number(player?.id_estatus_admin) === 2) {
+
+            const confirmado = await Alerts.confirm(
+                `El dispositivo <b>PLYR-${idPlayer}</b> se encuentra administrativamente <b>Inactivo</b>.<br><br>
+                 La configuración se guardará y será aplicada cuando el player vuelva a estar activo.<br><br>
+                 ¿Deseas guardar la configuración de todas formas?`,
+                'Dispositivo inactivo',
+                'Sí, guardar',
+                true
+            );
+
+            if (!confirmado) {
+                return;
+            }
+        }
+
         try {
             Loading();
             $('#config-save-player').prop('disabled', true);
@@ -502,6 +632,27 @@ class ConfigurarDispositivos {
             return;
         }
 
+        // Obtener el nombre de la salida de audio seleccionada.
+        const salidaAudio = $('input[name="config-bulk-audio"]:checked')
+            .closest('.config-audio-option')
+            .find('.config-audio-option-title')
+            .text()
+            .trim();
+
+        // Solicitar confirmación antes de aplicar el cambio masivo.
+        const confirmado = await Alerts.confirm(
+            `Estás a punto de aplicar la salida de audio <b>${salidaAudio}</b> a <b>todos los Players</b> registrados, incluidos los inactivos.<br><br>
+             <b>Esta acción reemplazará la configuración individual de audio de cada dispositivo.</b><br><br>
+             ¿Deseas continuar?`,
+            '¿Confirmar configuración masiva?',
+            'Sí, aplicar a todos',
+            true
+        );
+
+        if (!confirmado) {
+            return;
+        }
+
         try {
             Loading();
             $('#config-save-bulk').prop('disabled', true);
@@ -542,6 +693,10 @@ class ConfigurarDispositivos {
     /** Asocia los controles existentes de la vista. */
     registrarEventos() {
 
+        $('#buscar, #region, #estatus-admin').on('input change', () => {
+            this.consultaVersion++;
+        });
+
         //=================================================================================
         // FILTROS
         //=================================================================================
@@ -573,7 +728,7 @@ class ConfigurarDispositivos {
         //=================================================================================
         // MODALES
         //=================================================================================
-        
+
         // Abre el modal de configuraciones del player
         this.$modulo.on('click', '.config-btn-player, .configurar-detail-action', e => {
             const id = $(e.currentTarget).attr('data-id') || $(e.currentTarget).attr('data-detail');
@@ -616,6 +771,8 @@ class ConfigurarDispositivos {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('config-bulk-modal')).show();
         });
 
+        $(window).on('pagehide', () => this.detenerActualizacionAutomatica());
+
         // Guardar configuración individual del Player.
         $(document).on('click', '#config-save-player', async () => {
             await this.guardarConfiguracionPlayer();
@@ -647,3 +804,7 @@ const ConfigurarDispositivosCs = new ConfigurarDispositivos();
 $(document).ready(async function () {
     await ConfigurarDispositivosCs.init();
 });
+
+
+
+

@@ -14,7 +14,10 @@
         .app-swal-in  { animation: app-swal-in  .65s cubic-bezier(.16, 1, .3, 1) both; }
         .app-swal-out { animation: app-swal-out .4s  cubic-bezier(.4, 0, .2, 1)  both; }
 
-        .swal2-container { backdrop-filter: blur(4px); transition: backdrop-filter .4s ease; }
+        .swal2-container:not(.swal2-container--toast) {
+            backdrop-filter: blur(4px);
+            transition: backdrop-filter .4s ease;
+        }
         .swal2-popup { border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, .25); }
     `;
     document.head.appendChild(style);
@@ -72,11 +75,37 @@ const Alerts = {
         });
     },
 
-    async confirm(message, title = "¿Estás seguro?", confirmText = "Confirmar") {
+    toast(message, title = "Notificación", icon = "success") {
+        return Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: icon,
+            title: title,
+            text: message,
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            width: 340,
+            padding: "12px",
+            background: "#ffffff",
+            showClass: {
+                popup: "swal2-show"
+            },
+            hideClass: {
+                popup: "swal2-hide"
+            },
+            didOpen: (toast) => {
+                toast.addEventListener("mouseenter", Swal.stopTimer);
+                toast.addEventListener("mouseleave", Swal.resumeTimer);
+            }
+        });
+    },
+
+    async confirm(message, title = "¿Estás seguro?", confirmText = "Confirmar", permitirHTML = false) {
         const r = await Modal.fire({
             icon: "question",
             title,
-            text: message,
+            ...(permitirHTML ? { html: message } : { text: message }),
             showCancelButton: true,
             confirmButtonText: confirmText,
             cancelButtonText: "Cancelar",
